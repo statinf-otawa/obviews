@@ -882,6 +882,7 @@ class handler(BaseHTTPRequestHandler):
         
         print("\n")
         self.send_response(200)
+        self.send_header('Access-Control-Allow-Origin', '*')
         self.send_header('Content-type', f[1])
         self.end_headers()
         

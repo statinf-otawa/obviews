@@ -1,0 +1,98 @@
+body
+{
+    background-image:url(fond.png) ;
+    background-position: left top;
+    background-size: auto;
+    background-repeat: repeat;
+    background-attachment: fixed;
+    font-family: 'Trebuchet MS', Arial, sans-serif;
+}
+header
+{
+    width: 70%;;
+    margin: auto;
+    
+    margin-bottom: 10px;
+    position: top;
+    border-radius: 10px;
+    border: 2px rgb(122, 4, 201) solid;
+    background-color: rgb(228, 213, 238);
+    text-transform: uppercase;
+    padding-top: 3px;
+}
+#enTete
+{
+    width: 900px;
+    margin: auto;
+}
+nav ul
+{
+    list-style-type: none;
+    display: flex;
+}
+nav li
+{
+    margin-right: 5%;
+}
+nav a
+{
+    font-size: 1.5em;
+    padding-bottom: 3px;
+}
+nav
+{
+    width: 95%;
+    margin: auto;
+    margin-bottom: 5px;
+    padding: 5px;
+    border-radius: 10px;
+    border: 1px rgb(122, 4, 201) solid;
+    background-color: rgb(228, 213, 238);
+}
+section
+{
+    width: 70%;
+    margin: auto;
+    margin-bottom: 5px;
+    border-radius: 10px;
+    border: 2px rgb(122, 4, 201) solid;
+    background-color: rgb(228, 213, 238);
+}
+#titreSection
+{   
+    width: 70%;
+    margin: auto;
+    background-color: rgb(182, 129, 231);
+    border-radius: 5px;
+}
+#titreSection h1
+{
+    text-align: center;
+}
+#corpDeSection
+{
+    background-color: rgba(171, 111, 250, 0.808);
+    border-radius: 5px;
+    width: 80%;
+    margin: auto;
+    margin-bottom: 2%;
+    padding-bottom: 1%;
+    text-align: center;
+}
+footer
+{
+    width: 70%;
+    margin: auto;
+    margin-top: 5px;
+    position: bottom;
+    border-radius: 10px;
+    border: 2px rgb(122, 4, 201) solid;
+    background-color: rgb(228, 213, 238);
+    text-align: center;
+    
+}
+footer li
+{
+    list-style-type: none;
+
+}

@@ -806,10 +806,7 @@ def router(path='', query={}):
 
     elif lien[1] == "resources":                 # /resources
         if len(lien) >= 3:
-            lien2 = lien[2].split('/',1)
-
-            if lien2[0]=="logo-small.png":        # /resources/logo-small.png
-                return open(os.path.join(path_dir_otawa_ressources,'logo-small.png'), 'rb').read(), 'image/png'
+            return open(os.path.join(path_dir_otawa_ressources, lien[2]), 'rb').read(), ''
 
     else:                                         # /
         return open(os.path.join(path_dir_otawa_ressources,'index.html'), 'rb').read(),'text/html'
@@ -832,7 +829,7 @@ def routerStats(path='', query={}):
     if path!="":                               # /stats/
         lien = path.split('/',1)
 
-        if lien[0]=="list_cfgs":                # /stats/list_cfg
+        if lien[0]=="list_cfgs":                # /stats/list_cfgs
             l = get_list_cfgs(dir)
             return output_list_cfgs(l), "text/json"
 
@@ -872,7 +869,7 @@ class handler(BaseHTTPRequestHandler):
     def do_GET(self):
     
         urlP = urllib.parse.urlparse(self.path)
-        print(urlP)
+
         if '=' in urlP.query:
             query = {t[0] : t[1] for t in [p.split('=') for p in urlP.query.split('&')]}
         else:

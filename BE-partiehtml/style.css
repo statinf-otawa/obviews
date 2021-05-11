@@ -36,7 +36,7 @@ nav li
 }
 nav a
 {
-    font-size: 1.5em;
+    font-size: 1.3em;
     padding-bottom: 3px;
 }
 nav
@@ -53,29 +53,33 @@ section
 {
     width: 70%;
     margin: auto;
+    padding-bottom: 3%;
+    padding-top: 3%;
     margin-bottom: 5px;
     border-radius: 10px;
     border: 2px rgb(122, 4, 201) solid;
     background-color: rgb(228, 213, 238);
 }
-#titreSection
+.titreSection
 {   
-    width: 70%;
+    width: 50%;
     margin: auto;
+    padding-bottom: 1%;
+    padding-top: 1%;
     background-color: rgb(182, 129, 231);
     border-radius: 5px;
 }
-#titreSection h1
+.titreSection h1
 {
     text-align: center;
 }
-#corpDeSection
+.corpsDeSection
 {
-    background-color: rgba(171, 111, 250, 0.808);
+    background-color: rgba(172, 158, 255, 0.808);
     border-radius: 5px;
     width: 80%;
     margin: auto;
-    margin-bottom: 2%;
+    margin-bottom: 5px;
     padding-bottom: 1%;
     text-align: center;
 }

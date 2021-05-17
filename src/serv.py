@@ -6,6 +6,7 @@ import io
 import json
 import os
 import re
+import subprocess
 import sys
 import urllib.parse
 import webbrowser
@@ -15,12 +16,38 @@ from threading import Thread
 
 HOST, PORT = '127.0.0.1', 8000
 
+###############################################################################
+#                                                                             #
+#                              Setter                                         #
+#                                                                             #
+###############################################################################
+
+def set_path_otawa(path_otawa):
+    globals()['path_dir_otawa'] = path_otawa
+
+def set_path_workdir(path_workdir):
+    
+    globals()['path_dir_workspace'] = path_workdir
 
 ###############################################################################
 #                                                                             #
 #                           Generation stats                                  #
 #                                                                             #
 ###############################################################################
+
+def run_owcet(path_executable, script, target=None, path_flowfacts=None):
+    prog = os.path.join(globals()['path_dir_otawa_bin'], 'owcet')
+    commande = prog+ " " + path_executable
+    
+    if path_flowfacts is not None:
+        commande += " -f " + path_flowfacts
+
+    if target is not None:
+        commande += " " + target
+
+    commande += " -s " + script + " --stats"
+
+    return subprocess.call(commande.split())
 
 def get_list_scripts(path_otawa):
     path = os.path.join(path_otawa, "share/Otawa/scripts")
@@ -537,7 +564,7 @@ def output_CFG(task, decorator, with_source = False, cfg_id = None):
         elif b.type == BLOCK_EXIT:
             out.write("label=\"exit\"")
         elif b.type == BLOCK_CALL:
-            out.write("URL=\"%s.dot\",label=\"call %s\",shape=\"box\"" % (b.callee.id, b.callee.label))
+            out.write("URL=\"%s\",label=\"call %s\",shape=\"box\"" % (b.callee.id, b.callee.label))
         else:
             num = b.id[b.id.find("-") + 1:]
             out.write("margin=0,shape=\"box\",label=<<table border='0' cellpadding='8px'><tr><td>BB %s (%s:%s)</td></tr><hr/><tr><td align='left'>" % (num, b.base, b.size))
@@ -573,7 +600,7 @@ def output_sources(path, main, task, stats, source_id = None):
         for b in g.verts:
             if b.type == BLOCK_CODE:
                 for (f, l) in b.lines:
-                    if f not in sources and os.path.isfile(f):
+                    if f not in sources and os.path.isfile(os.path.join(globals()['path_dir_workspace'], f)):
                         sources.append(f)
                         maxl[f] = 0
                     if f in sources:
@@ -699,7 +726,7 @@ def output_sources(path, main, task, stats, source_id = None):
         out.write("</tr>\n")
 
         # read the source file
-        inp = open(f)
+        inp = open(os.path.join(globals()['path_dir_workspace'], f))
         num = 0
         for l in inp.readlines():
             num = num + 1
@@ -802,21 +829,43 @@ def router(path='', query={}):
     elif lien[1] == "stats":                     # /stats
         return routerStats(p, query)
 
+    elif lien[1] == "set":                       # /set
+        return routerSet(p, query)
 
+    elif lien[1] == "get":                       # /get
+        return routerGet(p, query)
 
     elif lien[1] == "resources":                 # /resources
         if len(lien) >= 3:
-            return open(os.path.join(path_dir_otawa_ressources, lien[2]), 'rb').read(), ''
+            return 200, {}, open(os.path.join(globals()['path_dir_serveur_resources'], lien[2]), 'rb').read()
 
-    else:                                         # /
-        return open(os.path.join(path_dir_otawa_ressources,'index.html'), 'rb').read(),'text/html'
+    else:                                        # /
+        return 200, {'Content-type':'text/html'}, open(os.path.join(globals()['path_dir_serveur_resources'],'index.html'), 'rb').read()
 
 def routerWcet(path='', query={}):
     lien = path.split('/',1)
 
-    if lien[0] == "list_scripts":
-        list_scripts = get_list_scripts(path_dir_otawa)
-        return output_list_scripts(list_scripts), "text/json"
+    if lien[0] == "list_scripts":                # /wcet/list_scripts
+        list_scripts = get_list_scripts(globals()['path_dir_otawa'])
+        return 200, {'Content-type':"text/json; charset=utf-8"}, output_list_scripts(list_scripts)
+
+    elif lien[0] == "run":                       # /wcet/run
+        script = query['script'] if 'script' in query else 'generic'
+
+        args = {'path_executable':query['executable'], 'script':script}
+
+        if 'flowfacts' in query:
+            args['path_flowfacts'] = query['flowfacts']
+
+        if 'target' in query:
+            args['target'] = query['target']
+        
+        retcode = run_owcet(**args)
+
+        if retcode == 0:
+            return 200, {'Content-type':"text/plain; charset=utf-8"}, "succes".encode("utf-8")
+        else:
+            return 400, {'Content-type':"text/plain; charset=utf-8"}, "error".encode("utf-8")
 
 def routerStats(path='', query={}):
     cfg = True
@@ -824,27 +873,26 @@ def routerStats(path='', query={}):
     stat = stats[0]
     doc_id = None
     f = "main"
-    dir = os.path.join(path_dir_workspace, f + "-otawa")
+    dir = os.path.join(globals()['path_dir_workspace'], f + "-otawa")
             
-    if path!="":                               # /stats/
+    if path!="":                                 # /stats/
         lien = path.split('/',1)
 
-        if lien[0]=="list_cfgs":                # /stats/list_cfgs
+        if lien[0]=="list_cfgs":                 # /stats/list_cfgs
             l = get_list_cfgs(dir)
-            return output_list_cfgs(l), "text/json"
-
-        if lien[0]=="cfg":                     # /stats/cfg
+            return 200, {'Content-type':"text/json; charset=utf-8"}, output_list_cfgs(l)
+        elif lien[0]=="cfg":                     # /stats/cfg
             cfg = True
-        elif lien[0]=="code":                  # /stats/code
+        elif lien[0]=="code":                    # /stats/code
             cfg = False                      
 
-        if len(lien) == 2 and lien[1]!="":     # /stats/.../doc_id
+        if len(lien) == 2 and lien[1]!="":       # /stats/.../doc_id
                 doc_id = lien[1]
 
         if "colored_by" in query:
-            if query["colored_by"]=="time":     # /stats/.../?colored_by=time
+            if query["colored_by"]=="time":      # /stats/.../?colored_by=time
                 stat = "ipet-total_time"
-            elif query["colored_by"]=="count":  # /stats/.../?colored_by=count
+            elif query["colored_by"]=="count":   # /stats/.../?colored_by=count
                 stat = "ipet-total_count"
                     
     
@@ -857,33 +905,64 @@ def routerStats(path='', query={}):
     if cfg:
         decorator = ColorDecorator
         out = output_CFG(task, decorator(stat, task, stats), True, doc_id)
-        return out, 'text/dot'
+        return 200, {'Content-type':"text/dot; charset=utf-8"}, out
 
     else :
         out = output_sources(dir, stat, task, stats, doc_id)
-        return out, "text/html"
+        return 200, {'Content-type':"text/html; charset=utf-8"}, out
 
+def routerSet(path='', query={}):
+    if 'work-dir' in query:
+        set_path_workdir(query['work-dir'])
+    if 'otawa-dir' in query:
+        set_path_otawa(query['otawa-dir'])
+    
+    return 200, {'Content-type':'text/plain; charset=utf-8'}, ("work-dir : %s \notawa-dir : %s"%(globals()['path_dir_workspace'],globals()['path_dir_otawa'])).encode("utf-8")
+
+def routerGet(path='',query={}):
+    get_value = {}
+
+    if 'work-dir' in  query:
+        get_value['work-dir'] = globals()['path_dir_workspace']
+    if 'otawa-dir' in query: 
+        get_value['otawa-dir'] = globals()['path_dir_otawa']
+
+    return 200, {'Content-type':"text/json; charset=utf-8"}, json.dumps(get_value).encode('utf-8')
 
 class handler(BaseHTTPRequestHandler):
 
     def do_GET(self):
     
         urlP = urllib.parse.urlparse(self.path)
+        query = {t[0] : t[1] for t in [p.split('=') if '=' in p else [p,''] for p in urlP.query.split('&')]}
 
-        if '=' in urlP.query:
-            query = {t[0] : t[1] for t in [p.split('=') for p in urlP.query.split('&')]}
-        else:
-            query = {}
-
-        f = router(urlP.path, query)
-        
         print("\n")
-        self.send_response(200)
-        self.send_header('Access-Control-Allow-Origin', '*')
-        self.send_header('Content-type', f[1])
-        self.end_headers()
+
+        try:
+            response_code , headers, data = router(urlP.path, query)
+        except Exception as err:
+            response_code = 500
+            headers = {}
+            data = str(err).encode('utf-8')
+
+        if type(response_code) is tuple:
+            code = response_code[0]
+            message = response_code[1]
+        else:
+            code = response_code
+            message = None
         
-        self.wfile.write(f[0])
+        self.send_response(code, message)
+
+        for key in headers:
+            self.send_header(key, headers[key])
+
+        self.send_header('Access-Control-Allow-Origin', '*')
+        self.end_headers()
+
+        self.wfile.write(data)
+
+        
 
     do_POST = do_GET
 
@@ -901,6 +980,12 @@ class StartServer(Thread):
         if (self.server is not None):
             self.server.shutdown()
 
+
+###############################################################################
+#                                                                             #
+#                                Main                                         #
+#                                                                             #
+###############################################################################
 def dir_path(path):
     if os.path.exists(path):
         if os.path.isdir(path):
@@ -910,31 +995,27 @@ def dir_path(path):
     else:
         raise argparse.ArgumentTypeError("path does not exist: %r" % path)
 
-
-###############################################################################
-#                                                                             #
-#                                Main                                         #
-#                                                                             #
-###############################################################################
-if __name__ == "__main__":
+def main():
     # parse arguments
     parser = argparse.ArgumentParser(description = "Display for OTAWA")
     parser.add_argument('-p', '--port', type=int, help="Port pour ce connecter à l'affichage à partir du navigateur")
     parser.add_argument('-w', '--work-dir', metavar="PATH", type=dir_path, default=os.getcwd(), help="Chemin du répertoire à analyser")
+    parser.add_argument('-o', '--otawa-dir', metavar="PATH", type=dir_path, default=os.path.dirname(os.path.dirname(sys.argv[0])), help="Chemin de l'installation d'Otawa")
     args = parser.parse_args()
 
     if args.port is not None:
-        PORT = args.port
+        globals()['PORT'] = args.port
 
-    path_dir_otawa_bin = os.path.dirname(sys.argv[0]) # Chemin vers les sources de cette application
-    path_dir_otawa = os.path.dirname(path_dir_otawa_bin)
-    path_dir_otawa_ressources = os.path.join(path_dir_otawa_bin,'resources') # Chemin vers les ressources de cette application
-    path_dir_workspace = args.work_dir           # Chemin vers le répertoire à annalyser
+    globals()['path_dir_serveur'] = os.path.dirname(sys.argv[0])
+    globals()['path_dir_serveur_resources'] = os.path.join(globals()['path_dir_serveur'],'resources') # Chemin vers les ressources de cette application
+    globals()['path_dir_otawa'] = args.otawa_dir
+    globals()['path_dir_otawa_bin'] = os.path.join(globals()['path_dir_otawa'], "bin") # Chemin vers les sources de cette application
+    globals()['path_dir_workspace'] = args.work_dir           # Chemin vers le répertoire à annalyser
 
-    print(path_dir_otawa, flush=True)
-    print(path_dir_otawa_bin, flush=True)
-    print(path_dir_otawa_ressources, flush=True)
-    print(path_dir_workspace, flush=True)
+    print(globals()['path_dir_otawa'], flush=True)
+    print(globals()['path_dir_otawa_bin'], flush=True)
+    print(globals()['path_dir_serveur_resources'], flush=True)
+    print(globals()['path_dir_workspace'], flush=True)
     print("@@@@@@@@@@@@@@@@\n\n", flush=True)
 
 
@@ -957,3 +1038,7 @@ if __name__ == "__main__":
         t.stop()
 
     os._exit(0)
+
+
+if __name__ == "__main__":
+    main()

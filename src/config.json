@@ -3,5 +3,5 @@
     "PORT": 8000,
     "HOST": "127.0.0.1"
   },
-  "otawa-path": "/home/sylvain/Documents/[BE]-OTAWA/OTAWA"
+  "otawa-path": ".."
 }

@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
  
 import argparse
-from cmd import Cmd
 import datetime
 import io
 import json

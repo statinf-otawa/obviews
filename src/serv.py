@@ -1,16 +1,19 @@
 #!/usr/bin/env python3
  
 import argparse
+from cmd import Cmd
 import datetime
 import io
 import json
 import os
 import re
+import signal
 import subprocess
 import sys
 import urllib.parse
 import webbrowser
 import xml.etree.ElementTree as ET
+from http import server
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from threading import Thread
 
@@ -22,12 +25,14 @@ HOST, PORT = '127.0.0.1', 8000
 #                                                                             #
 ###############################################################################
 
-def set_path_otawa(path_otawa):
+def set_path_otawa(path_otawa, save_config=False):
     globals()['path_dir_otawa'] = path_otawa
+    if save_config:
+        update_data_config({'otawa-path':globals()['path_dir_otawa']})
 
 def set_path_workdir(path_workdir):
-    
     globals()['path_dir_workspace'] = path_workdir
+
 
 ###############################################################################
 #                                                                             #
@@ -839,6 +844,10 @@ def router(path='', query={}):
         if len(lien) >= 3:
             return 200, {}, open(os.path.join(globals()['path_dir_serveur_resources'], lien[2]), 'rb').read()
 
+    elif lien[1] == "stop":
+        os.kill(os.getpid(), signal.SIGINT)
+        return 204, {}, "".encode('utf-8')
+
     else:                                        # /
         return 200, {'Content-type':'text/html'}, open(os.path.join(globals()['path_dir_serveur_resources'],'index.html'), 'rb').read()
 
@@ -912,10 +921,12 @@ def routerStats(path='', query={}):
         return 200, {'Content-type':"text/html; charset=utf-8"}, out
 
 def routerSet(path='', query={}):
+    save_config = 'save_config' in query and query['save_config']=="True"
+
     if 'work-dir' in query:
         set_path_workdir(query['work-dir'])
     if 'otawa-dir' in query:
-        set_path_otawa(query['otawa-dir'])
+        set_path_otawa(query['otawa-dir'], save_config)
     
     return 200, {'Content-type':'text/plain; charset=utf-8'}, ("work-dir : %s \notawa-dir : %s"%(globals()['path_dir_workspace'],globals()['path_dir_otawa'])).encode("utf-8")
 
@@ -979,6 +990,60 @@ class StartServer(Thread):
     def stop(self):
         if (self.server is not None):
             self.server.shutdown()
+            self.server.server_close()
+            self.server = None
+
+
+
+###############################################################################
+#                                                                             #
+#                               Config                                        #
+#                                                                             #
+###############################################################################
+
+def default_config():
+    data = {}
+    data['server']={}
+    data['server']['PORT'] = 8000
+    data['server']['HOST'] = "127.0.0.1"
+    data['otawa-path'] = os.path.dirname(os.path.dirname(sys.argv[0]))
+    return data
+
+def existing_config():
+    return os.path.isfile(os.path.join(globals()['path_dir_serveur'],"config.json"))
+
+def init_config():
+    with open(os.path.join(globals()['path_dir_serveur'],"config.json"), "w") as config_file:
+        data = default_config()
+        json.dump(data, config_file, indent=2)
+
+def read_config():
+    with open(os.path.join(globals()['path_dir_serveur'],"config.json"), "r") as config_file:
+        data = json.load(config_file)
+        return data
+
+def apply_config(config):
+    globals()['PORT'] = config['server']['PORT']
+    globals()['HOST'] = config['server']['HOST'] 
+    globals()['path_dir_otawa'] = config['otawa-path']
+
+def replace_value_config(dict_1, dict_2):
+    if type(dict_1) is dict and type(dict_2) is dict:
+        for key in dict_2:
+            print(key)
+            if key in dict_1 and type(dict_1[key]) is dict and type(dict_2[key]) is dict:
+                replace_value_config(dict_1[key], dict_2[key])
+            else:
+                dict_1[key] = dict_2[key]
+
+def update_data_config(data_updated):
+    with open(os.path.join(globals()['path_dir_serveur'],"config.json"), "r+") as config_file:
+        data = json.load(config_file)
+        
+        replace_value_config(data, data_updated)
+        config_file.seek(0)
+        json.dump(data, config_file, indent=2)
+        config_file.truncate()
 
 
 ###############################################################################
@@ -1000,15 +1065,28 @@ def main():
     parser = argparse.ArgumentParser(description = "Display for OTAWA")
     parser.add_argument('-p', '--port', type=int, help="Port pour ce connecter à l'affichage à partir du navigateur")
     parser.add_argument('-w', '--work-dir', metavar="PATH", type=dir_path, default=os.getcwd(), help="Chemin du répertoire à analyser")
-    parser.add_argument('-o', '--otawa-dir', metavar="PATH", type=dir_path, default=os.path.dirname(os.path.dirname(sys.argv[0])), help="Chemin de l'installation d'Otawa")
+    parser.add_argument('-o', '--otawa-dir', metavar="PATH", type=dir_path, help="Chemin de l'installation d'Otawa")
     args = parser.parse_args()
+
+
+    globals()['path_dir_serveur'] = os.path.dirname(sys.argv[0])
+
+    config = default_config()
+    print("existing config : ", existing_config(), flush=True)
+    if existing_config == True:
+        replace_value_config(config, read_config())
+    else:
+        init_config()
+
+    apply_config(config)
 
     if args.port is not None:
         globals()['PORT'] = args.port
+    if args.otawa_dir is not None:
+        globals()['path_dir_otawa'] = args.otawa_dir
 
-    globals()['path_dir_serveur'] = os.path.dirname(sys.argv[0])
+    
     globals()['path_dir_serveur_resources'] = os.path.join(globals()['path_dir_serveur'],'resources') # Chemin vers les ressources de cette application
-    globals()['path_dir_otawa'] = args.otawa_dir
     globals()['path_dir_otawa_bin'] = os.path.join(globals()['path_dir_otawa'], "bin") # Chemin vers les sources de cette application
     globals()['path_dir_workspace'] = args.work_dir           # Chemin vers le répertoire à annalyser
 
@@ -1027,9 +1105,16 @@ def main():
     webbrowser.open("http://"+HOST+':'+str(PORT))
 
     # Attend que l'utilisateur veuille arreter le serveur
+    
+    def handlerSIGINT(signal, stack_frame):
+        if t.is_alive() :
+            t.stop()
+
+        os._exit(0)
+        
+    signal.signal(signal.SIGINT, handlerSIGINT)
 
     text = ""
-    
     while(text!="stop"):
 
         text = input("> ")

@@ -1024,7 +1024,7 @@ def read_config():
 def apply_config(config):
     globals()['PORT'] = config['server']['PORT']
     globals()['HOST'] = config['server']['HOST'] 
-    globals()['path_dir_otawa'] = config['otawa-path']
+    globals()['path_dir_otawa'] = os.path.join(globals()['path_dir_serveur'], config['otawa-path'])
 
 def replace_value_config(dict_1, dict_2):
     if type(dict_1) is dict and type(dict_2) is dict:
@@ -1062,11 +1062,15 @@ def dir_path(path):
 def main():
     # parse arguments
     parser = argparse.ArgumentParser(description = "Display for OTAWA")
+    parser.add_argument('--config', action='store_true', help="Génère un fichier de configuration par default. Attention si le fichier config.json existe déjà, il sera remplacé.")
     parser.add_argument('-p', '--port', type=int, help="Port pour ce connecter à l'affichage à partir du navigateur")
     parser.add_argument('-w', '--work-dir', metavar="PATH", type=dir_path, default=os.getcwd(), help="Chemin du répertoire à analyser")
     parser.add_argument('-o', '--otawa-dir', metavar="PATH", type=dir_path, help="Chemin de l'installation d'Otawa")
     args = parser.parse_args()
 
+    if args.config:
+        init_config()
+        sys.exit(0)
 
     globals()['path_dir_serveur'] = os.path.dirname(sys.argv[0])
 
@@ -1074,8 +1078,7 @@ def main():
     print("existing config : ", existing_config(), flush=True)
     if existing_config == True:
         replace_value_config(config, read_config())
-    else:
-        init_config()
+        
 
     apply_config(config)
 

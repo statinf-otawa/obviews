@@ -1,3 +1,4 @@
+
 body
 {
     background-image:url(fond.png) ;
@@ -13,6 +14,7 @@ header
     margin: auto;
     
     margin-bottom: 10px;
+    margin-top: 1%;
     position: top;
     border-radius: 10px;
     border: 2px rgb(122, 4, 201) solid;
@@ -32,16 +34,22 @@ nav ul
 }
 nav li
 {
-    margin-right: 5%;
+    margin: auto;
 }
 nav a
 {
     font-size: 1.3em;
     padding-bottom: 3px;
 }
+nav a:hover
+{
+    text-decoration: none;
+    color: white;
+    font-size: 1.3em;
+}
 nav
 {
-    width: 95%;
+    width: 50%;
     margin: auto;
     margin-bottom: 5px;
     padding: 5px;
@@ -83,20 +91,45 @@ section
     padding-bottom: 1%;
     text-align: center;
 }
+section #modedemploi
+{
+    text-align: center;
+}
+section #fondAbout
+{
+    text-align: center;
+}
+section #fondAbout ul
+{
+    text-align: center;
+    list-style-type: none;
+}
 footer
 {
     width: 70%;
     margin: auto;
+    padding-top: 1%;
+    padding-bottom: 1%;
     margin-top: 5px;
     position: bottom;
     border-radius: 10px;
     border: 2px rgb(122, 4, 201) solid;
     background-color: rgb(228, 213, 238);
     text-align: center;
-    
+}
+footer ul
+{
+    width: 50%;
+    display: flex;
+    margin: auto;
 }
 footer li
 {
+    margin: auto;
     list-style-type: none;
-
+}
+footer li a:hover
+{
+    text-decoration: none;
+    color: white;
 }

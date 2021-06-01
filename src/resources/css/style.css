@@ -74,11 +74,22 @@ section
     margin: auto;
     padding-bottom: 1%;
     padding-top: 1%;
+    margin-bottom: 2%;
     background-color: rgb(182, 129, 231);
     border-radius: 5px;
 }
 .titreSection h1
 {
+    text-align: center;
+}
+#infosServeur{
+    background-color: rgba(172, 158, 255, 0.808);
+    border-radius: 5px;
+    width: 80%;
+    margin: auto;
+    margin-bottom: 5px;
+    padding-bottom: 1%;
+    padding-top: 0.5%;
     text-align: center;
 }
 .corpsDeSection
@@ -105,15 +116,6 @@ section #fondAbout ul
     list-style-type: none;
 }
 
-#infosServeur{
-    margin: auto;
-    background-color: rgb(182, 129, 231);
-    border-radius: 5px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 70%;
-}
 
 #graph_links{
     border:  black 3px;
@@ -131,7 +133,6 @@ section #fondAbout ul
     border-radius: 5px;
     width: 839px;
     margin: auto;
-    margin-bottom: 2%;
     padding-bottom: 1%;
     text-align: center;
 }

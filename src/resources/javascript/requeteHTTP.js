@@ -225,6 +225,7 @@ function displaySources(reponse){
 
 function displayCode(reponse){
   clearDisplay("source_code");
+  console.log("DisplayCode");
   var answerDiv = document.getElementById("source_code");
   var answerHTML = document.createElement("p");
   let [colorIndex, colorationValue] = findColorationValue();
@@ -287,12 +288,14 @@ function testRemplissageDiv(divName){
 
 function getData(){
   let nomFichier = document.getElementById(ID_NOM_FICHIER).value;
-
+  /*
   if(nomFichier.length > 1){
     getCodeData(nomFichier);
   }else{
     getSources();
   }
+  */
+  getSources();
 }
 
 function getSources(){

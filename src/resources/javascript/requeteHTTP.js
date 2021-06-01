@@ -394,3 +394,8 @@ function changePathInfos(reponse){
   pathRepertoryDiv.value = workdirPath;
   infosServeur.innerHTML = `<p>Infos :<br>Chemin de l'installation d'Otawa : ${otawadirPath}<br>Chemin répertoire de travail : ${workdirPath}</p>`;
 }
+
+function logOut(){
+  let url = `http://${ADDRESSE_IP}:${NUM_PORT}/stop`;
+  ajaxGet(url, doNothing);
+}

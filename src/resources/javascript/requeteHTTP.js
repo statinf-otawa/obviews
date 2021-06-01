@@ -69,7 +69,7 @@ function afficherGrapheNouvelleFenetre(element){
   console.log(graphTitle);
   let colorationHTML = setColorationHTML();
   let windowObjectReference = window.open(`template.html#${graphTitle}`, `testGraph${graphTitle}`, strWindowFeatures);
-  let templateHTML = `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><link rel="stylesheet" href="resources/style.css"/><title>Template</title></head><body id="graph_body"><header><div id="enTete"> <img src="Obviews.jpeg" alt="Obviews" /> </div><nav><ul><li><a href="index.html">Accueil</a></li><li><a href="zone-de-test.html">Zone de test</a></li><li><a href="about.html">mode d'emploi</a></li></ul></nav></header><div id="graph_links">Liens</div>${colorationHTML}<div id="graph_border"><div id="graph_frame"><div id="server_answer"></div></div></div><footer>More information : <br><ul><li><a href="about.html">About</a></li></ul></footer><script src="resources/javascript/node_modules/viz.js/viz.js"></script><script src="resources/javascript/node_modules/viz.js/full.render.js"></script><script src="resources/javascript/ajax.js"></script><script src="resources/javascript/requeteHTTP.js"></script><script src="resources/javascript/graphScripts.js"></script></body></html>`;
+  let templateHTML = `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><link rel="stylesheet" href="resources/css/style.css"/><title>Template</title></head><body id="graph_body"><header><div id="enTete"> <img src="resources/images/Obviews.jpeg" alt="Obviews" /> </div><nav><ul><li><a href="index.html">Accueil</a></li><li><a href="html/mode-d'emploi.html">mode d'emploi</a></li></ul></nav></header><div id="graph_links">Liens</div>${colorationHTML}<div id="graph_border"><div id="graph_frame"><div id="server_answer"></div></div></div><footer>More information : <br><ul><li><a href="resources/html/about.html">About</a></li></ul></footer><script src="resources/javascript/node_modules/viz.js/viz.js"></script><script src="resources/javascript/node_modules/viz.js/full.render.js"></script><script src="resources/javascript/ajax.js"></script><script src="resources/javascript/requeteHTTP.js"></script><script src="resources/javascript/graphScripts.js"></script></body></html>`;
   windowObjectReference.document.write(templateHTML);
   windowObjectReference.document.close(); //Si il manque le close(), la page n'est pas prévenue de l'arret des modifications et peut ne pas se charger
   let answerDiv = windowObjectReference.document.getElementById(ID_REPONSE_SERVEUR);
@@ -126,6 +126,7 @@ function findColorationValue(){
   return [i, colorationValue];
 }
 
+/*
 function testNouvelleFenetre(){
   var strWindowFeatures = "";
   let rand = Math.floor(Math.random() * 1000); //Test de fenêtres avec un nom différent pour que la deuxième n'écrase pas la première
@@ -134,6 +135,7 @@ function testNouvelleFenetre(){
   windowObjectReference.document.write(templateHTML);
   windowObjectReference.document.close(); //Si il manque le close(), la page n'est pas prévenue de l'arret des modifications et peut ne pas se charger
 }
+*/
 
 function arbreLiens(html){
   let listeLiens = trouverLiens(traitementReponseHTML(html));

@@ -1,31 +1,69 @@
-<!DOCTYPE HTML>
-
-<html>
-
+<!DOCTYPE html>
+<html lang="fr">
     <head>
-
-        <title>Hello World</title>
-
-        <link rel="icon" href="http://127.0.0.1:8000/resources/logo-small.png" sizes="32x32">
-
+        <meta charset="UTF-8">
+        <link rel="stylesheet" href="resources/css/style.css"/>
+        <title> Accueil </title>
     </head>
+    <body onload="updateInfos();">
+        <header>
+            <div id="enTete"> <img src="resources/images/Obviews.jpeg" alt="Obviews" /> </div>
+            <nav>
+                <ul>
+                    <li><a href="index.html">Accueil</a></li>
+                    <li><a href="resources/html/mode-d'emploi.html">mode d'emploi</a></li>
+                </ul>
 
-    <body>
+            </nav>
+        </header>
 
-        <h2>WCET</h2>
-        <a href="wcet/list_scripts">liste des scriptes (json)</a><br />
 
-        <h2>Stats</h2>
+        <section class="mode automatique">
+            <div class="titreSection">
+                <h1>Otawa en mode automatique</h1>
+            </div>
+            <div id="infosServeur">
+            </div>
+            <div class="corpsDeSection">
+                <p>
+                    <br> Veuillez entrer le chemin de votre fichier binaire : <br><br>
+                    <input type="text" id="inputBinaire" >
+                    <br><br>
+                    <br> Veuillez entrer le chemin de votre répertoire de travail : <br><br>
+                    <input type="text" id="pathRepertory" ><button onclick="changePathRepertory();">Valider</button>
+                    <br><br>
+                    <label for="coloration">Type de coloration : </label>
+                    <input type="radio" name="coloration" value="time" checked="checked">time</input>
+                    <input type="radio" name="coloration" value="count">count</input>
+                    <br><br><button onclick="getData();" name="voir_code">voir code</button>
+                    <br><br><button onclick="getGraphData('_0');" name="voir_graphe">voir graphe</button>
+                </p>
+            </div>
+            <div id="source_code">
+                <p>Code source</p>
+            </div>
+            
+        </section>
+        <section class="mode pas à pas">
+            <div class="titreSection">
+                <h1>Otawa en mode pas-à-pas</h1>
+            </div>
+            <div>
+                <p>
+                    ici on propose d'éxécuter les commandes une à une pour, par exemple, décrypter un résultat.
+                </p>
+            </div>
+        </section>
 
-        <a href="/stats/cfg/">cfg</a><br />
-
-        <a href="/stats/cfg/?colored_by=count">cfg colored by count</a><br />
-
-        <a href="/stats/cfg/?colored_by=time">cfg colored by time</a><br />
-
-        <a href="/stats/code/">code</a><br />
-        <a href="/stats/list_cfgs">liste des cfg (json)</a>
-
+        <footer>
+            More information : <br>
+            <ul>
+                <li><a href="resources/html/about.html">About</a></li>
+            </ul>
+        </footer>
+        <script src="resources/javascript/node_modules/viz.js/viz.js"></script>
+        <script src="resources/javascript/node_modules/viz.js/full.render.js"></script>
+        <script src="resources/javascript/ajax.js"></script>
+        <script src="resources/javascript/requeteHTTP.js"></script>
     </body>
-
 </html>

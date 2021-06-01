@@ -1,7 +1,7 @@
 
 body
 {
-    background-image:url(fond.png) ;
+    background-image:url(../images/fond.png) ;
     background-position: left top;
     background-size: auto;
     background-repeat: repeat;

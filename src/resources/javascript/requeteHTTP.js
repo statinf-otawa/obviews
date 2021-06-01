@@ -1,4 +1,4 @@
-var ID_NOM_FICHIER = "inputBinaire";
+var ID_NOM_FICHIER = "pathRepertory";
 var ID_REPONSE_SERVEUR = "server_answer";
 var GRAPH_WIDTH = 800;
 var GRAPH_HEIGHT = 1000;

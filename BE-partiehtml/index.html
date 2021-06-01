@@ -28,15 +28,26 @@
                     <br> Veuillez entrer le chemin de votre fichier binaire : <br><br>
                     <input type="text" id="inputBinaire" >
                     <!--<br><br> ou <br><br>
-                    <span><input type="file" id="inputBinaire" ></span>-->
+                    <span><input type="file" id="inputBinaire" ></span>
                     <br><br>Mode de coloration : <br><br>
                     <input type="radio" id="time" name="coloration" value="time">
                     <label for="time">Time</label><br>
                     <input type="radio" id="count" name="coloration" value="count">
                     <label for="count">Count</label><br>
-                    <br><br><button onclick="truc" name="voir_graphe">voir graphe</button>
+                    <br><br><button onclick="truc" name="voir_graphe">voir graphe</button>-->
+                    <input type="text" id="pathRepertory" ><button onclick="changePathRepertory();">Valider</button>
+                    <br><br>
+                    <label for="coloration">Type de coloration : </label>
+                    <input type="radio" name="coloration" value="time" checked="checked">time</input>
+                    <input type="radio" name="coloration" value="count">count</input>
+                    <br><br><button onclick="getData();" name="voir_code">voir code</button>
+                    <br><br><button onclick="getGraphData('_0');" name="voir_graphe">voir graphe</button>
                 </p>
             </div>
+            <div id="source_code">
+                <p>Code source</p>
+            </div>
+            
         </section>
         <!--<section class="mode pas à pas">
             <div class="titreSection">

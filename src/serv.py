@@ -855,7 +855,7 @@ def routerWcet(path='', query={}):
 
     if lien[0] == "list_scripts":                # /wcet/list_scripts
         list_scripts = get_list_scripts(globals()['path_dir_otawa'])
-        return 200, {'Content-type':"text/json; charset=utf-8"}, output_list_scripts(list_scripts)
+        return 200, {'Content-type':"application/json; charset=utf-8"}, output_list_scripts(list_scripts)
 
     elif lien[0] == "run":                       # /wcet/run
         script = query['script'] if 'script' in query else 'generic'
@@ -888,7 +888,7 @@ def routerStats(path='', query={}):
 
         if lien[0]=="list_cfgs":                 # /stats/list_cfgs
             l = get_list_cfgs(dir)
-            return 200, {'Content-type':"text/json; charset=utf-8"}, output_list_cfgs(l)
+            return 200, {'Content-type':"application/json; charset=utf-8"}, output_list_cfgs(l)
         elif lien[0]=="cfg":                     # /stats/cfg
             cfg = True
         elif lien[0]=="code":                    # /stats/code
@@ -913,7 +913,7 @@ def routerStats(path='', query={}):
     if cfg:
         decorator = ColorDecorator
         out = output_CFG(task, decorator(stat, task, stats), True, doc_id)
-        return 200, {'Content-type':"text/dot; charset=utf-8"}, out
+        return 200, {'Content-type':"application/dot; charset=utf-8"}, out
 
     else :
         out = output_sources(dir, stat, task, stats, doc_id)
@@ -937,7 +937,7 @@ def routerGet(path='',query={}):
     if 'otawa-dir' in query: 
         get_value['otawa-dir'] = globals()['path_dir_otawa']
 
-    return 200, {'Content-type':"text/json; charset=utf-8"}, json.dumps(get_value).encode('utf-8')
+    return 200, {'Content-type':"application/json; charset=utf-8"}, json.dumps(get_value).encode('utf-8')
 
 class handler(BaseHTTPRequestHandler):
 

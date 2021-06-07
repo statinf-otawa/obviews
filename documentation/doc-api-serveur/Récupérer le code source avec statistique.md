@@ -4,7 +4,7 @@ Retourne un html du code source indiqué par `$fichier_source` avec les stats du
 
 
 
-![code_source_colore](images\code_source_colore.png)
+![code_source_colore](images/code_source_colore.png)
 
 
 

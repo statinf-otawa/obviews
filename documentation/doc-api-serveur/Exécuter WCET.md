@@ -1,6 +1,6 @@
 # Arrêter le serveur
 
- Lance l'analyse par wcet de l'exécutable indiqué par le champs obligatoire `executable` avec la possibilité d'indiquer le fichier `flowfacts` associé. Possibilité de choisir avec quel `script` sera analysé le programme parmi ceux renvoyé par http://127.0.0.1:8000/wcet/list_scripts (voir [liste des scriptes](Récupérer la liste des scriptes pour WCET.md)) et avec la possibilité de choisir la fonction de départ (default : main).
+ Lance l'analyse par wcet de l'exécutable indiqué par le champs obligatoire `executable` avec la possibilité d'indiquer le fichier `flowfacts` associé. Possibilité de choisir avec quel `script` sera analysé le programme parmi ceux renvoyé par http://127.0.0.1:8000/wcet/list_scripts (voir [liste des scriptes](Récupérer%20la%20liste%20des%20scriptes%20pour%20WCET.md)) et avec la possibilité de choisir la fonction de départ (default : main).
 
 
 
@@ -8,7 +8,7 @@
 >
 > Le chemin d'installation doit être précisé soit dans le fichier de configuration soit juste pour le lancement actuel en changeant les valeur du serveur.
 >
-> Voir : [Définir les valeurs du serveur](Définir les valeurs du serveur.md) et [Récupérer les valeurs du serveur](Récupérer les valeurs du serveur.md)
+> Voir : [Définir les valeurs du serveur](Définir%20les%20valeurs%20du%20serveur.md) et [Récupérer les valeurs du serveur](Récupérer%20les%20valeurs%20du%20serveur.md)
 
 
 

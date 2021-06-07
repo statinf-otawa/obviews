@@ -4,7 +4,7 @@ Retourne le cfg en fichier `.dot` de {$id_cfg} correspondant à une fonction. Si
 
 
 
-![cfg](images\cfg.png)
+![cfg](images/cfg.png)
 
 [TOC]
 

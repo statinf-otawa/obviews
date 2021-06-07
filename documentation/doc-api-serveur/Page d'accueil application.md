@@ -2,7 +2,7 @@
 
 La page d'accueil est la première page affiché par l'application Obviews.
 
-![Accueil](images\Accueil.png)
+![Accueil](images/Accueil.png)
 
 
 

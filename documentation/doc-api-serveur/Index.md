@@ -21,5 +21,5 @@
 ## Génération des statistique avec WCET 
 
 - [Récupérer la liste des scriptes pour WCET](Récupérer la liste des scriptes pour WCET.md)
-- Exécuter WCET
+- [Exécuter WCET](Exécuter WCET.md)
 

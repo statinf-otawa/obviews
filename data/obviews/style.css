@@ -1,12 +1,13 @@
 
 body
 {
-    background-image:url(../images/fond.png) ;
+    /*background-image:url(../images/fond.png) ;*/
     background-position: left top;
     background-size: auto;
     background-repeat: repeat;
     background-attachment: fixed;
     font-family: 'Trebuchet MS', Arial, sans-serif;
+    background: #EEEEEE;
 }
 header
 {
@@ -198,6 +199,10 @@ footer li a:hover
 
 
 /* Top bar */
+div.top {
+    background: #EEEEEE;
+    padding: 4px;
+}
 div.top div.title {
 	display: inline-block;
 }
@@ -215,4 +220,42 @@ div.top div.title span.subtitle {
 div.top div.menu {
 	display: inline-block;
 	float: right;
+}
+
+/* page style */
+* {
+  box-sizing: border-box;
+}
+div.page {
+	content: "";
+	clear: both;
+	display: table;
+	width: 100%;
+}
+
+/* list part */
+div.list {
+	display: inline-block;
+	background: white;
+	border-style: inset;
+	border-width: 2px;
+	border-radius: 4px;
+	width: 20%;
+	float: left;
+	padding: 4px;
+}
+div.items {
+	padding-left: 8px;
+}
+
+
+/* main window */
+div.main {
+	display: inline-block;
+	background: white;
+	border-style: inset;
+	border-width: 2px;
+	border-radius: 4px;
+	width: 80%;
+	float: left;
 }

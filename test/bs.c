@@ -41,16 +41,22 @@
 /*************************************************************************/
 
 
+int main(void);
+
+void _start(void) {
+	main();
+	while(1);
+}
+
+void __eabi(void) {
+}
+
 
 
 struct DATA {
   int  key;
   int  value;
 }  ;
-
-#ifdef DEBUG
-	int cnt1;
-#endif 
 
 struct DATA data[15] = { {1, 100},
 	     {5,200},
@@ -68,12 +74,7 @@ struct DATA data[15] = { {1, 100},
 	     {17, 133},
 	     {18, 10} };
 
-main()
-{
-	binary_search(8);
-}
-
-binary_search(x)
+int binary_search(int x)
 {
   int fvalue, mid, up, low ;
 
@@ -85,29 +86,21 @@ binary_search(x)
     if ( data[mid].key == x ) {  /*  found  */
       up = low - 1;
       fvalue = data[mid].value;
-#ifdef DEBUG
-	printf("FOUND!!\n");
-#endif
     }
     else  /* not found */
       if ( data[mid].key > x ) 	{
 	up = mid - 1;
-#ifdef DEBUG
-	printf("MID-1\n");
-#endif
       }
       else   {
              	low = mid + 1;
-#ifdef DEBUG
-	printf("MID+1\n");
-#endif
       }
-#ifdef DEBUG
-	cnt1++;
-#endif
   }
-#ifdef DEBUG
-	printf("Loop Count : %d\n", cnt1);
-#endif
   return fvalue;
 }
+
+int main(void)
+{
+	binary_search(8);
+	return 0;
+}
+

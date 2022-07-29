@@ -3,6 +3,7 @@
 from functools import partial
 import argparse
 import datetime
+import glob
 import io
 import json
 import os
@@ -19,6 +20,9 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 from threading import Thread
 
 HOST, PORT = '127.0.0.1', 8000
+TASK = None
+SOURCE_MANAGER = None
+STATS = None
 
 ###############################################################################
 #                                                                             #
@@ -141,11 +145,23 @@ def fatal(msg):
 
 
 class SourceManager:
-	"""The source manager manges sources of the processed program."""
+	"""The source manager manages sources of the processed program."""
 	
 	def __init__(self, paths = ["."]):
 		self.paths = paths
 		self.sources = {}
+
+	def find_actual_path(self, path):
+		"""Find the actual path to the given source.
+		Return None if it cannot be found."""
+		if os.path.isabs(path):
+			return os.path.isfile(path)
+		else:
+			for p in self.paths:
+				p = os.path.join(p, path)
+				if os.path.isfile(p):
+					return p
+			return None
 	
 	def load_source(self, path, alias = None):
 		"""Try to load the source from the file system."""
@@ -404,6 +420,7 @@ def norm(name):
 
 def read_stat(dir, task, stat):
 	try:
+		print(stat)
 		inp = open(os.path.join(dir, "stats", stat + ".csv"))
 		for l in inp.readlines():
 			fs = l[:-1].split("\t")
@@ -594,7 +611,76 @@ def output_CFG(task, decorator, with_source = False, cfg_id = None):
 
 	return out.getBinarie()
 
-def output_sources(path, main, task, stats, source_id = None):
+
+def gen_source(src, stat = None):
+	"""Generate a source output."""
+	lines = SOURCE_MANAGER.find_source(src)
+
+	# collect statistics if required
+	if stat:
+		stats = [0] * len(lines)
+		for g in task.cfgs:
+			for b in g.verts:
+				if b.type == BLOCK_CODE:
+					for (f, l) in b.lines:
+						if f == src:
+							try:
+								stats[l-1] = stats[l-1] + b.get_val(s)
+							except IndexError:
+								pass
+
+	# select colorizer
+	try:
+		col = SYNTAX_COLS[os.path.splitext(src)[1]]()
+	except KeyError:
+		col = SyntaxColorizer()
+
+	# generate the table
+	out = StrWrite()
+	out.write("<table id=\"stats\">\n")
+	out.write(" <tr><th></th><th>source</th>")
+	if stat:
+		out.write("<th>%s</a></th>" % stat)
+	num = 0
+
+	for l in lines:
+			num = num + 1
+			style = ""
+
+			# prepare line
+			if l.endswith("\n"):
+				l = l[:-1]
+			style = ""
+			
+			# compute indentation
+			indent = 0
+			while l:
+				if l[0] == ' ':
+					indent = indent + 8
+				elif l[0] == '\t':
+					indent = indent + 32
+				else:
+					break
+				l = l[1:]
+			if indent:
+				style = style + " padding-left: %spt;" % indent
+
+			# display the line
+			out.write('<tr><td>%d</td><td class=\"source\"' % num)
+			if style:
+				out.write(" style=\"%s\"" % style)
+			out.write(">")
+			col.colorize(l, out)
+			out.write("</td>")
+
+	out.write("</tr>\n")
+	text = SOURCE_MANAGER.find_source(src)
+	out.write("</table>\n")
+	return out.getBinarie()
+
+
+def old_output_sources(path, main, task, stats, source_id = None):
+	"""Output the source for display."""
 	
 	# collect sources and statistics
 	sources = []
@@ -809,34 +895,125 @@ def output_list_cfgs(list_cfg):
 	return json.dumps(list_cfg).encode("utf-8")
 
 
+EXPAND_VAR = re.compile("([^\$].*)\$\{([^\}]*)\}(.*)")
+
+def preprocess(path, map):
+	"""Preprocess the given path containing string of the form ${ID}
+	and getting the ID from the map. Return the preprocessed file
+	as a string."""
+	out = ""
+	print("DEBUG: preprocess")
+	for l in open(path, "r"):
+		while l:
+			m = EXPAND_VAR.match(l)
+			if not m:
+				out = out + l
+				break
+			else:
+				r = map[m.group(2)]()
+				out = out + m.group(1) + r
+				l = m.group(3)
+	return out
+
+		
+def get_functions():
+	"""Generate HTML to access functions."""
+	out = ""
+	n = 0
+	for f in TASK.cfgs:
+		out = out + '<div><a href="/function/%s">%s</a></div>' % (n, f.label)
+		n = n + 1
+	return out
+
+def get_sources():
+	"""Generate HTML to access the sources of the current task."""
+
+	# build the list of sources
+	map = {}
+	for g in TASK.cfgs:
+		for v in g.verts:
+			if v.type == BLOCK_CODE:
+				for l in v.lines:
+					src = l[0]
+					if src not in map:
+						path = SOURCE_MANAGER.find_actual_path(src)
+						if path:
+							map[src] = path
+
+	# generate the HTML
+	out = ""
+	srcs = list(map.keys())
+	srcs.sort()
+	for src in srcs:
+		out = out + """<div><a href="javascript:show_source('%s')">%s</a></div>""" % (map[src], src)
+	return out
+
+
+INDEX_MAP = {
+	"functions":	get_functions,
+	"sources":		get_sources
+}
+
+
+def routerSet(path='', query={}):
+	save_config = 'save_config' in query and query['save_config']=="True"
+
+	if 'work-dir' in query:
+		set_path_workdir(query['work-dir'])
+	if 'otawa-dir' in query:
+		set_path_otawa(query['otawa-dir'], save_config)
+	
+	return 200, {'Content-type':'text/plain; charset=utf-8'}, ("work-dir : %s \notawa-dir : %s"%(globals()['path_dir_workspace'],globals()['path_dir_otawa'])).encode("utf-8")
+
+
+def routerGet(path='',query={}):
+	get_value = {}
+
+	if 'work-dir' in  query:
+		get_value['work-dir'] = globals()['path_dir_workspace']
+	if 'otawa-dir' in query: 
+		get_value['otawa-dir'] = globals()['path_dir_otawa']
+
+	return 200, {'Content-type':"application/json; charset=utf-8"}, json.dumps(get_value).encode('utf-8')
+
+
+def do_stop(path, query = {}):
+	"""Stop the application."""
+	return 666, {}, "".encode('utf-8')
+
+def do_source(path, query = {}):
+	out = gen_source(path)
+	return 200, {'Content-type':"text/html; charset=utf-8"}, out
+
+
+DO_MAP = {
+	"stop": 	do_stop,
+	"set":		routerSet,
+	"get":		routerGet,
+	"source":	do_source
+}
+
 def router(path='', query={}):
 	"""Process a request and return the anwer."""
 	global path_dir_serveur_resources
 
 	link = path.split('/', 2)
-	p = link[2] if len(link) >= 3 else ""
-	if link[1] == "wcet":
-		return routerWcet(p, query)
-
-	elif link[1] == "stats":
-		return routerStats(p, query)
-
-	elif link[1] == "set":
-		return routerSet(p, query)
-
-	elif link[1] == "get":
-		return routerGet(p, query)
-
-	elif link[1] == "stop":
-		return 666, {}, "".encode('utf-8')
-
-	else:
+	p = "/".join(link[2:])
+	try:
+		return DO_MAP[link[1]](p, query)
+	except KeyError:
 		if link[1] == "":
 			link[1] = "index.html"
-		path = os.path.join(path_dir_serveur_resources, link[1])
-		return 200, \
-			{}, \
-			open(path, 'rb').read()
+		path = os.path.join(path_dir_serveur_resources, "/".join(link[1:]))
+		if link[1] == "index.html":
+			return 200, \
+				{}, \
+				preprocess(path, INDEX_MAP).encode('utf-8')
+		else:
+			return 200, \
+				{}, \
+				open(path, 'rb').read()
+
 
 def routerWcet(path='', query={}):
 	lien = path.split('/',1)
@@ -907,26 +1084,6 @@ def routerStats(path='', query={}):
 		out = output_sources(dir, stat, task, stats, doc_id)
 		return 200, {'Content-type':"text/html; charset=utf-8"}, out
 
-def routerSet(path='', query={}):
-	save_config = 'save_config' in query and query['save_config']=="True"
-
-	if 'work-dir' in query:
-		set_path_workdir(query['work-dir'])
-	if 'otawa-dir' in query:
-		set_path_otawa(query['otawa-dir'], save_config)
-	
-	return 200, {'Content-type':'text/plain; charset=utf-8'}, ("work-dir : %s \notawa-dir : %s"%(globals()['path_dir_workspace'],globals()['path_dir_otawa'])).encode("utf-8")
-
-def routerGet(path='',query={}):
-	get_value = {}
-
-	if 'work-dir' in  query:
-		get_value['work-dir'] = globals()['path_dir_workspace']
-	if 'otawa-dir' in query: 
-		get_value['otawa-dir'] = globals()['path_dir_otawa']
-
-	return 200, {'Content-type':"application/json; charset=utf-8"}, json.dumps(get_value).encode('utf-8')
-
 class Handler(BaseHTTPRequestHandler):
 	"""Handle HTTP requests."""
 
@@ -938,15 +1095,16 @@ class Handler(BaseHTTPRequestHandler):
 
 		# manage the request
 		quit = False
-		try:
-			response_code , headers, data = router(urlP.path, query)
-			if response_code == 666:
-				quit = True
-				response_code = 204
-		except Exception as err:
-			response_code = 500
-			headers = {}
-			data = str(err).encode('utf-8')
+		#try:
+		response_code , headers, data = router(urlP.path, query)
+		if response_code == 666:
+			quit = True
+			response_code = 204
+		#except Exception as err:
+		#	print(err)
+		#	response_code = 500
+		#	headers = {}
+		#	data = str(err).encode('utf-8')
 
 		# build the answer
 		if type(response_code) is tuple:
@@ -1044,6 +1202,7 @@ def update_data_config(data_updated):
 #                                Main                                         #
 #                                                                             #
 ###############################################################################
+
 def dir_path(path):
 	if os.path.exists(path):
 		if os.path.isdir(path):
@@ -1065,13 +1224,25 @@ def main():
 	global path_dir_serveur_resources
 	global path_dir_otawa_bin
 	global path_dir_workspace
+	global TASK
+	global SOURCE_MANAGER
 
 	# parse arguments
 	parser = argparse.ArgumentParser(description = "Display for OTAWA")
-	parser.add_argument('--config', action='store_true', help="Génère un fichier de configuration par default. Attention si le fichier config.json existe déjà, il sera remplacé.")
-	parser.add_argument('-p', '--port', type=int, help="Port pour ce connecter à l'affichage à partir du navigateur")
-	parser.add_argument('-w', '--work-dir', metavar="PATH", type=dir_path, default=os.getcwd(), help="Chemin du répertoire à analyser")
+	parser.add_argument('executable', type=str,
+		help="Select the exacutable to get statistics from.")
+	parser.add_argument('task', nargs="?", type=str,
+		help="Select which task to display (default main function).")
+	parser.add_argument('-p', '--port', type=int,
+		help="Port for the browser to display these pages.")
+
+	# obsolete options
+	parser.add_argument('--config', action='store_true',
+		help="Génère un fichier de configuration par default. Attention si le fichier config.json existe déjà, il sera remplacé.")
+	#parser.add_argument('-w', '--work-dir', metavar="PATH", type=dir_path, default=os.getcwd(), help="Chemin du répertoire à analyser")
 	parser.add_argument('-o', '--otawa-dir', metavar="PATH", type=dir_path, help="Chemin de l'installation d'Otawa")
+	# end of obsolete options
+
 	args = parser.parse_args()
 
 	if args.config:
@@ -1106,12 +1277,31 @@ def main():
 
 	path_dir_serveur_resources = os.path.join(path_dir_serveur, "obviews")
 	path_dir_otawa_bin = os.path.join(path_dir_otawa, "bin")
-	path_dir_workspace = args.work_dir
+	#path_dir_workspace = args.work_dir
 
 	#print(globals()['path_dir_otawa'], flush=True)
 	#print(globals()['path_dir_otawa_bin'], flush=True)
 	#print(globals()['path_dir_serveur_resources'], flush=True)
 	#print(globals()['path_dir_workspace'], flush=True)
+
+	# look for the task
+	dir = os.path.dirname(os.path.splitext(args.executable)[0])
+	if not args.task:
+		task_name = "main"
+	else:
+		task_name = args.task
+	path_dir_workspace = os.path.join(dir, task_name + "-otawa")
+	task = read_cfg(path_dir_workspace)
+	STATS = []
+	for s in glob.glob(os.path.join(path_dir_workspace, "stats/*.csv")):
+			stat = os.path.basename(s)[:-4]
+			read_stat(
+				path_dir_workspace,
+				task,
+				stat)
+			STATS.append(stat)
+	TASK = task
+	SOURCE_MANAGER = SourceManager([dir])
 
 	# start browser and server
 	Thread(target=partial(open_browser, PORT)).start()

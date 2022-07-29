@@ -395,6 +395,10 @@ function changePathInfos(reponse){
   infosServeur.innerHTML = `<p>Infos :<br>Chemin de l'installation d'Otawa : ${otawadirPath}<br>Chemin répertoire de travail : ${workdirPath}</p>`;
 }
 
+
+// *********************** NEW CODE ************************
+
+
 function quit() {
 	window.close();
 }
@@ -414,4 +418,25 @@ function mainWindow() {
 
 function help() {
 	window.open("help.html", "obvious-help");
+}
+
+function clear_display(id){
+  let answerDiv = document.getElementById(id);
+  answerDiv.innerText = '';
+}
+
+
+function display_source(response) {
+  clear_display("main");
+  console.log("display_source " + response);
+  var answerDiv = document.getElementById("main");
+  var answerHTML = document.createElement("p");
+  let [colorIndex, colorationValue] = findColorationValue();
+  answerHTML.innerHTML = response;
+  answerDiv.appendChild(answerHTML);
+}
+
+function show_source(path){
+  let url = `http://127.0.0.1:8000/source/${path}`;
+  ajaxGet(url, display_source);
 }

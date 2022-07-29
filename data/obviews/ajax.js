@@ -10,7 +10,7 @@ function ajaxGet(url, callback){
         }
     });
     req.addEventListener("error", function(){
-        console.error("Erreur réseau avec l'url " + url);
+        console.error("Error with URL " + url);
     });
     req.send(null);
 }

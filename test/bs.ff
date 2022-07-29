@@ -1,0 +1,6 @@
+checksum "bs.elf" 0xd49d6f22;
+
+// Function main ()
+loop "main" + 0xc 10 ; // 0x103f4 ()
+
+

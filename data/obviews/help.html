@@ -2,21 +2,22 @@
 <html lang="fr">
     <head>
         <meta charset="UTF-8">
-        <link rel="stylesheet" href="../css/style.css"/>
+        <link rel="stylesheet" href="style.css"/>
         <link rel="icon" href="http://www.tracesgroup.net/otawa/wp-content/uploads/2015/12/logo-small.png" sizes="32x32" />
         <title> ModedEmploi </title>
     </head>
     <body>
-        <header>
-            <div id="enTete"> <img src="../images/Obviews.jpeg" alt="Obviews" /> </div>
-            <nav>
-                <ul>
-                    <li><a href="../../index.html">Accueil</a></li>
-                    <li><a href="mode-d'emploi.html">mode d'emploi</a></li>
-                </ul>
-    
-            </nav>
-        </header>
+		<div class="top">
+			<div class="title">
+				<span class="main">Obviews V1.0</span><br/>
+				<span class="subtitle"><a href="http://www.otawa/fr">OTAWA</a> Binary Viewers</span>
+			</div>
+			<div class="menu">
+				<button onclick="help();">Help</button>
+				<button onclick="window.close();">Close</button>
+			</div>
+		</div>
+
         <section>
             <p id="modedemploi">
                 Vous être en présence de l'outil Obviews.<br>
@@ -51,14 +52,8 @@
                 Vous pouvez stoper le serveur en cliquant sur le bouton "déconnexion".<br>
             </p>
         </section>
-
-        <footer>
-            More information : <br><br>
-            <ul>
-                <li><a href="about.html">About</a></li>
-                <li><a href="http://www.tracesgroup.net/otawa/?page_id=10">OTAWA</a></li>
-            </ul>
-        </footer>
+        <script src="ajax.js"></script>
+        <script src="requeteHTTP.js"></script>
     </body>
 
 </html>

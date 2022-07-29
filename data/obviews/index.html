@@ -2,23 +2,35 @@
 <html lang="fr">
     <head>
         <meta charset="UTF-8">
-        <link rel="stylesheet" href="resources/css/style.css"/>
+        <link rel="stylesheet" href="style.css"/>
         <title> Accueil </title>
     </head>
     <body onload="updateInfos();">
-        <header>
-            <div id="enTete"> <img src="resources/images/Obviews.jpeg" alt="Obviews" /> </div>
+		<div class="top">
+			<div class="title">
+				<span class="main">Obviews V1.0</span><br/>
+				<span class="subtitle"><a href="http://www.otawa/fr">OTAWA</a> Binary Viewers</span>
+			</div>
+			<div class="menu">
+				<button onclick="help();">Help</button>
+				<button onclick="about();">About</button>
+				<button onclick="logOut();">Quit</button>
+			</div>
+		</div>
+
+        <!--header>
+            <div id="enTete"> <img src="Obviews.jpeg" alt="Obviews" /> </div>
             <nav>
                 <ul>
                     <li><a href="index.html">Accueil</a></li>
-                    <li><a href="resources/html/mode-d'emploi.html">mode d'emploi</a></li>
+                    <li><a href="mode-d'emploi.html">mode d'emploi</a></li>
                 </ul>
 
             </nav>
-        </header>
+        </header-->
 
 
-        <section class="mode automatique">
+        <!--section class="mode automatique">
             <div class="titreSection">
                 <h1>Otawa en mode automatique</h1>
                 <br><br><button onclick="logOut();" name="deconnexion">deconnexion</button>
@@ -41,7 +53,7 @@
                 <p>Code source</p>
             </div>
             
-        </section>
+        </section!-->
         <!--<section class="mode pas à pas">
             <div class="titreSection">
                 <h1>Otawa en mode pas-à-pas</h1>
@@ -53,16 +65,16 @@
             </div>
         </section>-->
 
-        <footer>
+        <!--footer>
             Informations : <br><br>
             <ul>
                 <li><a href="about.html">About</a></li>
                 <li><a href="http://www.tracesgroup.net/otawa/?page_id=10">OTAWA</a></li>
             </ul>
-        </footer>
-        <script src="resources/javascript/node_modules/viz.js/viz.js"></script>
-        <script src="resources/javascript/node_modules/viz.js/full.render.js"></script>
-        <script src="resources/javascript/ajax.js"></script>
-        <script src="resources/javascript/requeteHTTP.js"></script>
+        </footer-->
+        <script src="node_modules/viz.js/viz.js"></script>
+        <script src="node_modules/viz.js/full.render.js"></script>
+        <script src="ajax.js"></script>
+        <script src="requeteHTTP.js"></script>
     </body>
 </html>

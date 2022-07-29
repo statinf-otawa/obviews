@@ -195,3 +195,24 @@ footer li a:hover
     text-decoration: none;
     color: white;
 }
+
+
+/* Top bar */
+div.top div.title {
+	display: inline-block;
+}
+div.top div.title span.main {
+	color: #6C4EAE;
+	text-shadow: 2px 2px 5px gray;
+	font-weight: bold;
+	font-size: 2em;
+}
+div.top div.title span.subtitle {
+	color: gray;
+	font-style: italic;
+	font-size: .75em;
+}
+div.top div.menu {
+	display: inline-block;
+	float: right;
+}

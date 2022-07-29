@@ -395,7 +395,23 @@ function changePathInfos(reponse){
   infosServeur.innerHTML = `<p>Infos :<br>Chemin de l'installation d'Otawa : ${otawadirPath}<br>Chemin répertoire de travail : ${workdirPath}</p>`;
 }
 
+function quit() {
+	window.close();
+}
+
 function logOut(){
   let url = `http://${ADDRESSE_IP}:${NUM_PORT}/stop`;
-  ajaxGet(url, doNothing);
+  ajaxGet(url, quit);
+}
+
+function about() {
+	window.open("about.html", "obvious-about");
+}
+
+function mainWindow() {
+	location.assign("index.html");
+}
+
+function help() {
+	window.open("help.html", "obvious-help");
 }

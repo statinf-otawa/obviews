@@ -1,6 +1,9 @@
+* {
+  box-sizing: border-box;
+}
 
-body
-{
+/* body */
+body {
     /*background-image:url(../images/fond.png) ;*/
     background-position: left top;
     background-size: auto;
@@ -8,7 +11,36 @@ body
     background-attachment: fixed;
     font-family: 'Trebuchet MS', Arial, sans-serif;
     background: #EEEEEE;
+    /*background: pink;*/
+	height: 100vh;
+	padding: 0;
+	margin: 0;
+	display: flex;
+	flex-direction: column;
+	max-height: 100vh;
 }
+
+div.top {
+    background: #EEEEEE;
+    padding: 8px;
+    /*margin: 8px;*/
+    flex: 0;
+}
+
+div.page {
+	content: "";
+	clear: both;
+	width: 100%;
+	padding-left: 8px;
+	padding-right: 8px;
+	/*background: green;*/
+	overflow: auto;
+	flex: 1;
+	display: flex;
+}
+
+
+/* deprecated */
 header
 {
     width: 70%;;
@@ -199,10 +231,6 @@ footer li a:hover
 
 
 /* Top bar */
-div.top {
-    background: #EEEEEE;
-    padding: 4px;
-}
 div.top div.title {
 	display: inline-block;
 }
@@ -222,17 +250,6 @@ div.top div.menu {
 	float: right;
 }
 
-/* page style */
-* {
-  box-sizing: border-box;
-}
-div.page {
-	content: "";
-	clear: both;
-	display: table;
-	width: 100%;
-}
-
 /* list part */
 div.list {
 	display: inline-block;
@@ -240,22 +257,33 @@ div.list {
 	border-style: inset;
 	border-width: 2px;
 	border-radius: 4px;
-	width: 20%;
 	float: left;
 	padding: 4px;
+	overflow: scroll;
+	flex: 1;
+	margin-right: 8px;
 }
 div.items {
 	padding-left: 8px;
 }
 
-
-/* main window */
+/* main part */
 div.main {
 	display: inline-block;
 	background: white;
 	border-style: inset;
 	border-width: 2px;
 	border-radius: 4px;
-	width: 80%;
-	float: left;
+	float: right;
+	overflow: scroll;
+	flex: 4;
 }
+
+/* bottom */
+div.bottom {
+	flex: 0;
+	text-align: center;
+	padding: 8px;
+}
+
+

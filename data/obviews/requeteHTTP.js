@@ -434,6 +434,11 @@ function clear_display(id){
 	answerDiv.innerText = '';
 }
 
+function display_in_code(msg) {
+	var code = document.getElementById("code");
+	code.innerHTML = `<div class="hint">${msg}</div>`;
+}
+
 
 function display_source(response) {
 	var code = document.getElementById("code");
@@ -445,6 +450,7 @@ function display_source(response) {
 }
 
 function show_source(path) {
+	display_in_code(`Loading ${path}.`);
 	SOURCE_PATH = path;
 	let url = `http://${HOST}:${PORT}/source/${SOURCE_PATH}`;
 	ajaxGet(url, display_source);

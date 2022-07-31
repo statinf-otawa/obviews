@@ -23,7 +23,6 @@ body {
 div.top {
     background: #EEEEEE;
     padding: 8px;
-    /*margin: 8px;*/
     flex: 0;
 }
 
@@ -34,9 +33,9 @@ div.page {
 	padding-left: 8px;
 	padding-right: 8px;
 	/*background: green;*/
-	overflow: auto;
 	flex: 1;
 	display: flex;
+	overflow: hidden;
 }
 
 
@@ -48,7 +47,7 @@ header
     
     margin-bottom: 10px;
     margin-top: 1%;
-    position: top;
+    /*position: top;*/
     border-radius: 10px;
     border: 2px rgb(122, 4, 201) solid;
     background-color: rgb(228, 213, 238);
@@ -180,7 +179,7 @@ section #fondAbout ul
 }
 
 #server_answer{
-    position: absolute;
+    /*position: absolute;*/
     /*background-color: red;*/
 }
 
@@ -206,7 +205,6 @@ footer
     padding-top: 1%;
     padding-bottom: 1%;
     margin-top: 5px;
-    position: bottom;
     border-radius: 10px;
     border: 2px rgb(122, 4, 201) solid;
     background-color: rgb(228, 213, 238);
@@ -253,12 +251,7 @@ div.top div.menu {
 /* list part */
 div.list {
 	display: inline-block;
-	background: white;
-	border-style: inset;
-	border-width: 2px;
-	border-radius: 4px;
 	float: left;
-	padding: 4px;
 	overflow: scroll;
 	flex: 1;
 	margin-right: 8px;
@@ -270,14 +263,24 @@ div.items {
 /* main part */
 div.main {
 	display: inline-block;
-	background: white;
-	border-style: inset;
-	border-width: 2px;
-	border-radius: 4px;
-	float: right;
-	overflow: scroll;
 	flex: 4;
+	/*background: pink;*/
+	padding: 0;
+	margin: 0;
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
 }
+
+#source-bar {
+	display: none;
+	padding: 4px;
+}
+
+#source-name {
+	flex: 1;
+}
+
 
 /* bottom */
 div.bottom {
@@ -286,4 +289,27 @@ div.bottom {
 	padding: 8px;
 }
 
+/* generic classes */
+.code {
+	background: white;
+	border-style: inset;
+	border-width: 2px;
+	border-radius: 4px;
+	overflow: auto;
+	padding: 4px;
+	flex: 1;
+	margin: 0;
+}
+
+.empty-code {
+	text-align: center;
+}
+
+.toolbar {
+	flex: 0;
+}
+
+.hint {
+	text-align: center;
+}
 

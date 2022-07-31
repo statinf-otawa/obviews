@@ -1,9 +1,18 @@
+var SOURCE_NAME;
+var STAT;
+var STAT_NAME;
+var HOST = "127.0.0.1";
+var PORT = "8000";
+
+
+// deprecated
 var ID_NOM_FICHIER = "pathRepertory";
 var ID_REPONSE_SERVEUR = "server_answer";
 var GRAPH_WIDTH = 800;
 var GRAPH_HEIGHT = 1000;
 var ADDRESSE_IP = "127.0.0.1";
 var NUM_PORT = "8000";
+
 
 //Pour la fonction de coloration
 var labels = ['ipet-total_time', 'ipet-total_count', ]; 
@@ -386,13 +395,13 @@ function updateInfos(){
 }
 
 function changePathInfos(reponse){
-  let pathRepertoryDiv = document.getElementById("pathRepertory");
+  /*let pathRepertoryDiv = document.getElementById("pathRepertory");
   let infosServeur = document.getElementById("infosServeur");
   let pathValues = JSON.parse(reponse);
   let workdirPath = pathValues["work-dir"];
   let otawadirPath = pathValues["otawa-dir"];
-  pathRepertoryDiv.value = workdirPath;
-  infosServeur.innerHTML = `<p>Infos :<br>Chemin de l'installation d'Otawa : ${otawadirPath}<br>Chemin répertoire de travail : ${workdirPath}</p>`;
+  //pathRepertoryDiv.value = workdirPath;
+  infosServeur.innerHTML = `<p>Infos :<br>Chemin de l'installation d'Otawa : ${otawadirPath}<br>Chemin répertoire de travail : ${workdirPath}</p>`;*/
 }
 
 
@@ -404,7 +413,7 @@ function quit() {
 }
 
 function logOut(){
-  let url = `http://${ADDRESSE_IP}:${NUM_PORT}/stop`;
+  let url = `http://${HOST}:${PORT}/stop`;
   ajaxGet(url, quit);
 }
 
@@ -421,22 +430,61 @@ function help() {
 }
 
 function clear_display(id){
-  let answerDiv = document.getElementById(id);
-  answerDiv.innerText = '';
+	let answerDiv = document.getElementById(id);
+	answerDiv.innerText = '';
 }
 
 
 function display_source(response) {
-  clear_display("main");
-  console.log("display_source " + response);
-  var answerDiv = document.getElementById("main");
-  var answerHTML = document.createElement("p");
-  let [colorIndex, colorationValue] = findColorationValue();
-  answerHTML.innerHTML = response;
-  answerDiv.appendChild(answerHTML);
+	var code = document.getElementById("code");
+	code.innerHTML = response;
+	var name = document.getElementById("source-name");
+	name.innerHTML = SOURCE_PATH;
+	var bar = document.getElementById("source-bar");
+	bar.style.display = 'flex';
 }
 
-function show_source(path){
-  let url = `http://127.0.0.1:8000/source/${path}`;
-  ajaxGet(url, display_source);
+function show_source(path) {
+	SOURCE_PATH = path;
+	let url = `http://${HOST}:${PORT}/source/${SOURCE_PATH}`;
+	ajaxGet(url, display_source);
+}
+
+function clear_source_stat() {	
+	var t = document.getElementById("stats");
+	t = t.children[0]
+	t.children[0].children[2].innerHTML = "";
+	for(let i = 0; i < t.childElementCount; i++) {
+		t.children[i].style.backgroundColor = "white";
+		t.children[i].children[2].innerHTML = "";
+	}
+}
+
+function display_stat_source(answer) {
+	var t = document.getElementById("stats");
+	t = t.children[0]
+	let a = answer.split(" ");
+	t.children[0].children[2].innerHTML = STAT_NAME;
+	let max = parseInt(a[1]);
+	let n = COLORS.length;
+	for(let i = 2; i < a.length; i += 2) {
+		let l = parseInt(a[i]);
+		let x = parseInt(a[i + 1]);
+		let c = Math.floor((x - 1) * n / max);
+		t.children[l].style.backgroundColor = COLORS[c];
+		t.children[l].children[2].innerHTML = "" + x;
+	}
+}
+
+function show_stat_source(stat, name) {
+	STAT = stat;
+	STAT_NAME = name;
+	if(stat == 0)
+		clear_source_stat();
+	else {
+		url = new URL(`http://${HOST}:${PORT}/source-stat`);
+		url.searchParams.append("stat", stat);
+		url.searchParams.append("src", SOURCE_PATH);
+		ajaxGet(url, display_stat_source);
+	}
 }

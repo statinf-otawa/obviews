@@ -6,6 +6,7 @@ import datetime
 import glob
 import io
 import json
+import mimetypes
 import os
 import re
 import signal
@@ -142,6 +143,91 @@ def error(msg):
 def fatal(msg):
 	error(msg)
 	exit(1)
+
+
+class StringBuffer():
+	def __init__(self):
+		self.str = ""
+	
+	def write(self, value):
+		self.str += value
+	
+	def make(self):
+		return self.to_utf8()
+
+	def to_utf8(self):
+		return self.str.encode("utf-8")
+
+	def to_str(self):
+		return self.str
+
+
+class Statistic:
+	"""Record information about statistics."""
+	name = None
+	map = None
+	max = None
+
+	def __init__(self, name):
+		self.name = name
+
+	def load(self, dir, task):
+		try:
+			inp = open(os.path.join(dir, "stats", self.name + ".csv"))
+			for l in inp.readlines():
+				fs = l[:-1].split("\t")
+				assert len(fs) == 4
+				task.collect(self.name, int(fs[0]), int(fs[1], 16), int(fs[2]), "[%s]" % fs[3][1:-1])
+		except OSError as e:
+			fatal("cannot open statistics %s: %s." % (self.stat, e))
+
+	def init(self):
+		self.map = {}
+		self.max = 0
+		for g in TASK.cfgs:
+			for b in g.verts:
+				if b.type == BLOCK_CODE:
+					for (f, l) in b.lines:
+
+						# get file
+						try:
+							file = self.map[f]
+						except KeyError:
+							file = []
+							self.map[f] = file
+
+						# get line
+						try:
+							file[l] = file[l] + b.get_val(self.name)
+						except IndexError:
+							file += [0] * (l + 1 - len(file))
+							file[l] = b.get_val(self.name)
+
+						# compute max
+						self.max = max(self.max, file[l])
+
+	def get_max(self):
+		if self.map == None:
+			self.init()
+		return self.max
+
+	def get_line(self, file, line):
+		"""Get the statistics for the given line."""
+		if self.map == None:
+			self.init()
+		try:
+			return self.map[file][line]
+		except (IndexError, KeyError):
+			return 0
+
+	def get_file(self, file):
+		"""Get the statistics for the give file."""
+		if self.map == None:
+			self.init()
+		try:
+			return self.map[file]
+		except KeyError:
+			return []
 
 
 class SourceManager:
@@ -562,6 +648,9 @@ class StrWrite():
 	def getBinarie(self):
 		return self.str.encode("utf-8")
 
+	def __str__(self):
+		return self.str
+
 def output_CFG(task, decorator, with_source = False, cfg_id = None):
 
 	# output each CFG
@@ -637,12 +726,10 @@ def gen_source(src, stat = None):
 
 	# generate the table
 	out = StrWrite()
-	out.write("<table id=\"stats\">\n")
-	out.write(" <tr><th></th><th>source</th>")
-	if stat:
-		out.write("<th>%s</a></th>" % stat)
-	num = 0
+	out.write('<table id="stats">\n')
+	out.write(" <tr><th></th><th>source</th><th></th>\n")
 
+	num = 0
 	for l in lines:
 			num = num + 1
 			style = ""
@@ -671,7 +758,7 @@ def gen_source(src, stat = None):
 				out.write(" style=\"%s\"" % style)
 			out.write(">")
 			col.colorize(l, out)
-			out.write("</td>")
+			out.write("</td><td></td>")
 
 	out.write("</tr>\n")
 	text = SOURCE_MANAGER.find_source(src)
@@ -902,7 +989,6 @@ def preprocess(path, map):
 	and getting the ID from the map. Return the preprocessed file
 	as a string."""
 	out = ""
-	print("DEBUG: preprocess")
 	for l in open(path, "r"):
 		while l:
 			m = EXPAND_VAR.match(l)
@@ -949,9 +1035,27 @@ def get_sources():
 	return out
 
 
+def get_stats():
+	out = '<option selected>No stat.</option>';
+	for s in STATS:
+		out = out + "<option>%s</option>" % s.name
+	return out
+
+
+def get_stat_colors():
+	out = StringBuffer()
+	out.write("var COLORS = new Array(")
+	out.write('"%s"' % str(COLORS[0]))
+	for i in range(1, len(COLORS)):
+		out.write(', "%s"' % COLORS[i])
+	out.write(");\n")
+	return out.to_str();
+
 INDEX_MAP = {
 	"functions":	get_functions,
-	"sources":		get_sources
+	"sources":		get_sources,
+	"stats":		get_stats,
+	"stat-colors":	get_stat_colors
 }
 
 
@@ -982,15 +1086,29 @@ def do_stop(path, query = {}):
 	return 666, {}, "".encode('utf-8')
 
 def do_source(path, query = {}):
-	out = gen_source(path)
+	try:
+		out = gen_source(path, query["stat"])
+	except KeyError:
+		out = gen_source(path)
 	return 200, {'Content-type':"text/html; charset=utf-8"}, out
 
 
+def do_source_stat(path, query):
+	stat = STATS[int(query["stat"]) - 1]
+	out = StringBuffer();
+	out.write("0 %d" % stat.get_max())
+	lines = stat.get_file(query["src"])
+	for i in range(0, len(lines)):
+		if lines[i] != 0:
+			out.write(" %d %d" % (i, lines[i]))
+	return 200, {"content-Type": "text/plain"}, out.make()
+
 DO_MAP = {
-	"stop": 	do_stop,
-	"set":		routerSet,
-	"get":		routerGet,
-	"source":	do_source
+	"stop": 		do_stop,
+	"set":			routerSet,
+	"get":			routerGet,
+	"source":		do_source,
+	"source-stat":	do_source_stat
 }
 
 def router(path='', query={}):
@@ -1010,8 +1128,10 @@ def router(path='', query={}):
 				{}, \
 				preprocess(path, INDEX_MAP).encode('utf-8')
 		else:
+			r = mimetypes.guess_type(path)
+			print("DEBUG:", path, r)
 			return 200, \
-				{}, \
+				{"Content-Type": r[0]}, \
 				open(path, 'rb').read()
 
 
@@ -1226,6 +1346,7 @@ def main():
 	global path_dir_workspace
 	global TASK
 	global SOURCE_MANAGER
+	global STATS
 
 	# parse arguments
 	parser = argparse.ArgumentParser(description = "Display for OTAWA")
@@ -1294,12 +1415,9 @@ def main():
 	task = read_cfg(path_dir_workspace)
 	STATS = []
 	for s in glob.glob(os.path.join(path_dir_workspace, "stats/*.csv")):
-			stat = os.path.basename(s)[:-4]
-			read_stat(
-				path_dir_workspace,
-				task,
-				stat)
+			stat = Statistic(os.path.basename(s)[:-4])
 			STATS.append(stat)
+			stat.load(path_dir_workspace, task)
 	TASK = task
 	SOURCE_MANAGER = SourceManager([dir])
 

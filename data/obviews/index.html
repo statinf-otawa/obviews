@@ -4,8 +4,13 @@
         <meta charset="UTF-8">
         <link rel="stylesheet" href="style.css"/>
         <title> Accueil </title>
+        <script>
+			${stat-colors}
+		</script>
     </head>
-    <body onload="updateInfos();">
+    <body
+		onload="updateInfos();"
+		onbeforeunload="javascript:logOut();">
 
 		<div class="top">
 			<div class="title">
@@ -20,7 +25,7 @@
 		</div>
 
 		<div class="page">
-			<div class="list">
+			<div class="list code">
 				<div class="list-header">Functions</div>
 				<div id="function-list" class="items">
 					${functions}
@@ -30,12 +35,27 @@
 					${sources}
 				</div>
 			</div>
-			<div id="main" class="main">
-				<p style="text-align: center;">
-					Nothing to display.
-					<br/>
-					<i>Select an item in the list at left.</i>
-				</p>
+			<div class="main">
+
+				<div id="source-bar">
+					<div id="source-name">
+						No source.
+					</div>
+					<div class="toolbar">
+						<select id="stat" onchange="javascript:show_stat_source(this.selectedIndex, this.value);">
+							${stats}
+						</select>
+					</div>
+				</div>
+
+				<div id="code" class="code">
+					<div class="hint">
+						Nothing to display.
+						<br/>
+						<i>Select an item in the list at left.</i>
+					</div>
+				</div>
+
 			</div>
 		</div>
 

@@ -13,10 +13,12 @@ import shutil
 import signal
 import subprocess
 import sys
+import tempfile
 import time
 import urllib.parse
 import webbrowser
 import xml.etree.ElementTree as ET
+
 from http import server
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from threading import Thread
@@ -1105,23 +1107,22 @@ def do_function(path, query):
 	g = TASK.cfgs[int(path)]
 
 	# generate the dot
-	dot_path = "test.dot"
-	dot = open(dot_path, "w")
-	output_CFG(dot, g, with_source = True)
-	dot.close()
+	(handle, path)  = tempfile.mkstemp(suffix=".dot", text=True)
+	out = os.fdopen(handle, "w")
+	output_CFG(out, g, with_source = True)
+	out.close()
 
 	# generate the SVG
-	svg_path = "test.svg"
-	r = subprocess.run(
-		[DOT_PATH, dot_path, "-Tsvg"],
-		capture_output = True
-	)
+	r = subprocess.run([DOT_PATH, path, "-Tsvg"], capture_output = True)
 	if r.returncode != 0:
 		return (
 			500,
 			{},
 			StringBuffer("Cannot generate the CFG: %s" % str(r.returncode)).to_utf8()
 		)
+
+	# clean up
+	os.remove(path)
 
 	# send the SVG
 	return 200, {}, r.stdout

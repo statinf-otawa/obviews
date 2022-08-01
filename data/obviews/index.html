@@ -8,9 +8,7 @@
 			${stat-colors}
 		</script>
     </head>
-    <body
-		onload="updateInfos();"
-		onbeforeunload="javascript:logOut();">
+    <body onbeforeunload="javascript:logOut();">
 
 		<div class="top">
 			<div class="title">
@@ -43,6 +41,17 @@
 					</div>
 					<div class="toolbar">
 						<select id="stat" onchange="javascript:show_stat_source(this.selectedIndex, this.value);">
+							${stats}
+						</select>
+					</div>
+				</div>
+
+				<div id="function-bar">
+					<div id="function-name">
+						No source.
+					</div>
+					<div class="toolbar">
+						<select id="function-stat" onchange="javascript:show_stat_cfg(this.selectedIndex, this.value);">
 							${stats}
 						</select>
 					</div>

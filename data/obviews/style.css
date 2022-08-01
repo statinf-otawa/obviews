@@ -272,12 +272,12 @@ div.main {
 	overflow: hidden;
 }
 
-#source-bar {
+#source-bar, #function-bar {
 	display: none;
 	padding: 4px;
 }
 
-#source-name {
+#source-name, #function-name {
 	flex: 1;
 }
 

@@ -1,6 +1,6 @@
 // server information
-var HOST = "127.0.0.1";
-var PORT = "8000";
+//var HOST = "127.0.0.1";
+//var PORT = "8000";
 
 // source management
 var SOURCE_NAME;

@@ -3,8 +3,10 @@
     <head>
         <meta charset="UTF-8">
         <link rel="stylesheet" href="style.css"/>
-        <title> Accueil </title>
+        <title>Obiews-${application}-${task}</title>
         <script>
+			var HOST = "${host}";
+			var PORT = "${port}";
 			${stat-colors}
 		</script>
     </head>
@@ -72,60 +74,6 @@
 			Copyright (c) 2022 <a href="http://www.otawa.fr">University of Toulouse</a>.
 		</div>
 
-        <!--header>
-            <div id="enTete"> <img src="Obviews.jpeg" alt="Obviews" /> </div>
-            <nav>
-                <ul>
-                    <li><a href="index.html">Accueil</a></li>
-                    <li><a href="mode-d'emploi.html">mode d'emploi</a></li>
-                </ul>
-
-            </nav>
-        </header-->
-
-
-        <!--section class="mode automatique">
-            <div class="titreSection">
-                <h1>Otawa en mode automatique</h1>
-                <br><br><button onclick="logOut();" name="deconnexion">deconnexion</button>
-            </div>
-            <div id="infosServeur">
-            </div>
-            <div class="corpsDeSection">
-                <p>
-                    <br> Veuillez entrer le chemin de votre répertoire de travail : <br><br>
-                    <input type="text" id="pathRepertory" ><button onclick="changePathRepertory();">Valider</button>
-                    <br><br>
-                    <label for="coloration">Type de coloration : </label>
-                    <input type="radio" name="coloration" value="time" checked="checked">time</input>
-                    <input type="radio" name="coloration" value="count">count</input>
-                    <br><br><button onclick="getData();" name="voir_code">voir code</button>
-                    <br><br><button onclick="getGraphData('_0');" name="voir_graphe">voir graphe</button>
-                </p>
-            </div>
-            <div id="source_code">
-                <p>Code source</p>
-            </div>
-            
-        </section!-->
-        <!--<section class="mode pas à pas">
-            <div class="titreSection">
-                <h1>Otawa en mode pas-à-pas</h1>
-            </div>
-            <div>
-                <p>
-                    ici on propose d'éxécuter les commandes une à une pour, par exemple, décrypter un résultat.
-                </p>
-            </div>
-        </section>-->
-
-        <!--footer>
-            Informations : <br><br>
-            <ul>
-                <li><a href="about.html">About</a></li>
-                <li><a href="http://www.tracesgroup.net/otawa/?page_id=10">OTAWA</a></li>
-            </ul>
-        </footer-->
         <script src="node_modules/viz.js/viz.js"></script>
         <script src="node_modules/viz.js/full.render.js"></script>
         <script src="ajax.js"></script>

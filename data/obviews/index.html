@@ -37,23 +37,11 @@
 			</div>
 			<div class="main">
 
-				<div id="source-bar">
-					<div id="source-name">
-						No source.
+				<div id="main-bar">
+					<div id="main-name">
 					</div>
 					<div class="toolbar">
-						<select id="stat" onchange="javascript:show_stat_source(this.selectedIndex, this.value);">
-							${stats}
-						</select>
-					</div>
-				</div>
-
-				<div id="function-bar">
-					<div id="function-name">
-						No source.
-					</div>
-					<div class="toolbar">
-						<select id="function-stat" onchange="javascript:show_stat_cfg(this.selectedIndex, this.value);">
+						<select id="stat" onchange="javascript:show_stat(this.selectedIndex, this.value);">
 							${stats}
 						</select>
 					</div>
@@ -74,8 +62,8 @@
 			Copyright (c) 2022 <a href="http://www.otawa.fr">University of Toulouse</a>.
 		</div>
 
-        <script src="node_modules/viz.js/viz.js"></script>
-        <script src="node_modules/viz.js/full.render.js"></script>
+        <!--script src="node_modules/viz.js/viz.js"></script>
+        <script src="node_modules/viz.js/full.render.js"></script-->
         <script src="ajax.js"></script>
         <script src="requeteHTTP.js"></script>
     </body>

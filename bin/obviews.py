@@ -28,11 +28,8 @@ from threading import Thread
 HOST = '127.0.0.1'
 PORT = 8000
 DATA_DIR = None
-APPLICATION = None
-TASK = None
-SOURCE_MANAGER = None
-STATS = None
 DOT_PATH = None
+TASK = None
 
 
 ######### Convenient functions #########
@@ -63,6 +60,9 @@ class StringBuffer():
 
 	def to_str(self):
 		return self.str
+
+	def to_xml(self):
+		return ('<?xml version="1.0" encoding="utf8" standalone="yes"?>\n' + self.str).encode("utf-8")
 
 
 def escape_dot(s):
@@ -133,30 +133,58 @@ SYNTAX_COLS = { ext: CColorizer \
 class Source:
 	"""Represents a source used in the application."""
 
-	def __init__(self, path):
-		self.name = os.path.basename(path)
+	def __init__(self, name, path):
+		self.label = os.path.basename(name)
+		self.name = name
 		self.path = path
-		self.lines = list(open(path, "r"))
-		try:
-			self.colorizer = SYNTAX_COLS[os.path.splitext(self.path)[1]]()
-		except KeyError:
-			self.colorizer = NULL_COLORIZER
+		self.lines = None
+		self.data = []
+		self.colorizer = None
+
+	def init_lines(self):
+		self.lines = list(open(self.path, "r"))
+
+	def get_lines(self):
+		if self.lines == None:
+			self.init_lines()
+		return self.lines
+
+	def get_line(self, num):
+		if self.lines == None:
+			self.init_lines()
+		if num >= len(self.lines):
+			return ""
+		else:
+			return self.lines[num]
+
+	def get_colorizer(self):
+		if self.colorizer == None:
+			try:
+				self.colorizer = SYNTAX_COLS[os.path.splitext(self.path)[1]]()
+			except KeyError:
+				self.colorizer = NULL_COLORIZER
+		return self.colorizer
+
+	def collect(self, num, stat, val):
+		if num >= len(self.data):
+			self.data = self.data + [None] * (num + 1 - len(self.data))
+		if self.data[num] == None:
+			self.data[num] = Data()
+		return self.data[num].add_val(stat, val)
+
+	def get_stat(self, num, stat):
+		if num >= len(self.data):
+			return 0
+		else:
+			data = self.data[num]
+			if data ==  None:
+				return 0
+			else:
+				return data.get_val(stat)
 
 	def gen(self, stat = None):
 		"""Generate a source output."""
-
-		# collect statistics if required
-		if stat:
-			stats = [0] * len(self.lines)
-			for g in task.cfgs:
-				for b in g.verts:
-					if b.type == BLOCK_CODE:
-						for (f, l) in b.lines:
-							if f == src:
-								try:
-									stats[l-1] = stats[l-1] + b.get_val(s)
-								except IndexError:
-									pass
+		col = self.get_colorizer()
 
 		# generate the table
 		out = StringBuffer()
@@ -164,7 +192,7 @@ class Source:
 		out.write(" <tr><th></th><th>source</th><th></th>\n")
 
 		num = 0
-		for l in self.lines:
+		for l in self.get_lines():
 				num = num + 1
 				style = ""
 
@@ -191,20 +219,28 @@ class Source:
 				if style:
 					out.write(" style=\"%s\"" % style)
 				out.write(">")
-				self.colorizer.colorize(l, out)
+				col.colorize(l, out)
 				out.write("</td><td></td>")
 
 		out.write("</tr>\n")
 		out.write("</table>\n")
-		return out.to_utf8()
+		r = out.to_utf8()
+		return r
 
 
 class SourceManager:
 	"""The source manager manages sources of the processed program."""
 	
-	def __init__(self, paths = ["."]):
+	def __init__(self, task, paths = ["."]):
+		self.task = task
 		self.paths = paths
-		self.sources = {}
+		self.map = {}
+		self.sources = []
+		self.max = Data()
+
+	def get_sources(self):
+		"""Get the sources composing the task."""
+		return self.sources
 
 	def find_actual_path(self, path):
 		"""Find the actual path to the given source.
@@ -218,21 +254,36 @@ class SourceManager:
 					return p
 			return None
 	
-	def find(self, path):
+	def find(self, name):
 		"""Lookup for a source file. If not already loaded, lookup
 		for the source using the lookup paths."""
 		try:
-			return self.sources[path]
+			return self.map[name]
 		except KeyError:
 			source = None
-			path = self.find_actual_path(path)
+			path = self.find_actual_path(name)
 			if path != None:
 				try:
-					source = Source(path)
+					source = Source(name, path)
+					self.sources.append(source)
 				except OSError:
 					pass
-			self.sources[path] = source
+			self.map[name] = source
 			return source
+
+	def collect(self, path, num, stat, val):
+		source = self.find(path)
+		if source != None:
+			x = source.collect(num, stat, val)
+			self.max.max_val(stat, x)
+
+	def get_lines(self, path):
+		"""Get the lines for the given path. Return None if the path
+		cannot be found."""
+		if source == None:
+			return None
+		else:
+			return source.get_lines()
 
 	def get_line(self, path, line):
 		"""Get the line corresponding to the given source path and line.
@@ -245,6 +296,9 @@ class SourceManager:
 				return source.lines[line - 1]
 			except IndexError:
 				return None
+
+	def get_max(self,stat):
+		return self.max.get_val(stat)
 
 
 ######## Lookup definitions #########
@@ -285,12 +339,9 @@ def foreground(ratio):
 
 class Decorator:
 	
-	def __init__(self, sman = SourceManager()):
-		self.sman = sman
+	def __init__(self, task):
+		self.sman = task.get_source_manager()
 	
-	def major(self):
-		return None
-
 	def start_cfg(self, cfg):
 		pass
 
@@ -319,7 +370,8 @@ class Decorator:
 					out.write("<font color='blue'>%s:%d:</font><br align='left'/>" \
 						% (escape_html(f), l))
 				if source != None:
-					source.colorizer.colorize(escape_html(source.lines[l-1]), out)
+					t = escape_html(source.get_lines()[l-1])
+					source.get_colorizer().colorize(t, out)
 					out.write("<br align='left'/>")
 				prev_file = f
 				prev_line = l
@@ -327,64 +379,32 @@ class Decorator:
 	def bb_label(self, b, out):
 		pass
 
-NULL_DECORATOR = Decorator()
 
 class BaseDecorator(Decorator):
 	
-	def __init__(self, main, task, stats):
-		Decorator.__init__(self)
-		self.main = main
+	def __init__(self, task, stat):
+		Decorator.__init__(self, task)
 		self.task = task
-		self.stats = stats
-
-		# assign maxes
-		task.max = Data()
-		task.sum = Data()
-		for g in task.cfgs:
-			g.max = Data()
-			g.sum = Data()
-
-		# compute maxes
-		for g in task.cfgs:
-			for b in g.verts:
-				for id in self.stats:
-					g.max.set_max(id, b.get_val(id))
-					g.sum.add_val(id, b.get_val(id))
-			for id in self.stats:
-				task.max.set_max(id, g.max.get_val(id))
-				task.sum.add_val(id, g.sum.get_val(id))
-	
-	def major(self):
-		return self.main
+		self.stat = stat
 	
 	def bb_label(self, bb, out):
-		for id in self.stats:
-			val = bb.get_val(id)
-			out.write("%s=%d (%3.2f%%)<br/>" % (id, val, val * 100. / self.task.sum.get_val(id)))
-	
-	def start_cfg(self, cfg):
-		self.max = 0
-		for b in cfg.verts:
-			try:
-				v = b.data[self.main]
-				if v > self.max:
-					self.max = v
-			except KeyError:
-				pass
-		self.max = float(self.max)
+		for stat in self.task.stats:
+			val = bb.get_val(stat)
+			percent = val * 100. / self.task.sum.get_val(stat)
+			out.write("%s=%d (%3.2f%%)<br/>" % (stat.name, val, percent))
 
 
 class ColorDecorator(BaseDecorator):
 
-	def __init__(self, main, task, stats):
-		BaseDecorator.__init__(self, main, task, stats)
+	def __init__(self, task, stat):
+		BaseDecorator.__init__(self, task, stat)
 
 	def bb_attrs(self, bb, out):
 		if bb.type == BLOCK_CALL:
-			val = bb.callee.max.get_val(self.main)
+			val = bb.callee.max.get_val(self.stat)
 		else:
-			val = bb.get_val(self.main)
-		ratio = float(val) / self.task.max.get_val(self.main)
+			val = bb.get_val(self.stat)
+		ratio = float(val) / self.task.get_max(self.stat)
 		if ratio != 0:
 			out.write(",fillcolor=\"%s\",style=\"filled\"" % background(ratio)) 
 			out.write(",fontcolor=\"%s\"" % foreground(ratio))
@@ -412,19 +432,23 @@ class Data:
 		except KeyError:
 			return 0
 	
-	def set_max(self, id, val):
-		if val != 0:
-			try:
-				self.data[id] = max(self.data[id], val)
-			except KeyError:
-				self.data[id] = val
+	def max_val(self, id, val):
+		if val == 0:
+			return 0
+		try:
+			self.data[id] = max(self.data[id], val)
+		except KeyError:
+			self.data[id] = val
+		return self.data[id]
 
 	def add_val(self, id, val):
-		if val != 0:
-			try:
-				self.data[id] = self.data[id] + val
-			except KeyError:
-				self.data[id] = val
+		if val == 0:
+			return 0
+		try:
+			self.data[id] = self.data[id] + val
+		except KeyError:
+			self.data[id] = val
+		return self.data[id]
 
 
 class Block(Data):
@@ -437,7 +461,7 @@ class Block(Data):
 		self.pred = []
 		self.lines = []
 	
-	def collect(self, id, val, addr, size):
+	def collect(self, id, val, addr, size, task):
 		return 0
 	
 
@@ -449,9 +473,11 @@ class BasicBlock(Block):
 		self.size = size
 		self.lines = lines
 
-	def collect(self, id, val, addr, size):
+	def collect(self, id, val, addr, size, task):
 		if self.base <= addr and addr < self.base + self.size:
 			self.add_val(id, val)
+			for (f, l) in self.lines:
+				task.sman.collect(f, l, id, val)
 
 
 class CallBlock(Block):
@@ -480,17 +506,28 @@ class CFG:
 		self.verts = []
 		self.entry = None
 		self.exit = None
-		self.data = { }
+		self.max = Data()
+		self.sum = Data()
 	
 	def add(self, block):
 		self.verts.append(block)
 
-	def collect(self, id, val, addr, size, ctx):
+	def begin_stat(self, id):
+		self.max.set_val(id, 0)
+		self.sum.set_val(id, 0)
+
+	def collect(self, id, val, addr, size, ctx, task):
 		if ctx == self.ctx:
 			for b in self.verts:
-				b.collect(id, val, addr, size)
+				b.collect(id, val, addr, size, task)
 
-	def gen(self, out, decorator = NULL_DECORATOR, with_source = False):
+	def end_stat(self, id):
+		for v in self.verts:
+			x = v.get_val(id)
+			self.max.max_val(id, x)
+			self.sum.add_val(id, x)
+
+	def gen(self, out, decorator, with_source = False):
 		decorator.start_cfg(self)
 
 		out.write("digraph %s {\n" % self.id)
@@ -524,25 +561,56 @@ class CFG:
 class Task:
 	"""Represents a task of the application."""
 	
-	def __init__(self, name, path):
+	def __init__(self, exec, name, path):
+		self.exec = exec
 		self.name = name
 		self.path = path
 		self.entry = None
 		self.cfgs = []
-		self.data = { }
+		self.max = Data()
+		self.sum = Data()
+		self.stats = []
+		self.sman = SourceManager([os.path.dirname("exec")])
 		self.read()
+
+	def get_max(self, stat):
+		return self.max.get_val(stat)
+
+	def get_sum(self, stat):
+		return self.sum.get_val(stat)
+
+	def get_source_manager(self):
+		return self.sman
+
+	def get_sources(self):
+		return self.sman.get_sources()
+
+	def find_source(self, name):
+		return self.sman.find(name)
 	
 	def add(self, cfg):
 		"""Add a a CFG to the task."""
 		if self.entry == None:
 			self.entry = cfg
 		self.cfgs.append(cfg)
-	
+
+	def begin_stat(self, id):
+		self.max.set_val(id, 0)
+		self.sum.set_val(id, 0)
+		for g in self.cfgs:
+			g.begin_stat(id)
+
 	def collect(self, id, val, addr, size, ctx):
 		"""Collect statistic item in the CFG."""
 		for g in self.cfgs:
-			g.collect(id, val, addr, size, ctx)
+			g.collect(id, val, addr, size, ctx, self)
 
+	def end_stat(self, id):
+		for g in self.cfgs:
+			g.end_stat(id)
+			self.max.max_val(id, g.max.get_val(id))
+			self.sum.add_val(id, g.sum.get_val(id))
+	
 	def read(self):
 		"""Read the task from the file."""
 		cfg_path = os.path.join(self.path, "stats/cfg.xml")
@@ -600,7 +668,9 @@ class Task:
 						except KeyError:
 							lines = []
 							for l in n.iter("line"):
-								lines.append((l.attrib["file"], int(l.attrib["line"])))
+								file = l.attrib["file"]
+								lines.append((file, int(l.attrib["line"])))
+								self.sman.find(file)
 							b = BasicBlock(id, int(n.attrib["address"], 16), int(n.attrib["size"]), lines)
 							b.lines = lines
 					else:
@@ -628,70 +698,56 @@ class Statistic:
 	map = None
 	max = None
 
-	def __init__(self, name):
+	def __init__(self, task, name, path):
+		self.task = task
 		self.name = name
+		self.path = path
+		self.loaded = False
+		task.stats.append(self)
 
-	def load(self, dir, task):
+	def load(self):
+		"""Load statistics data from the file."""
 		try:
-			inp = open(os.path.join(dir, "stats", self.name + ".csv"))
+			#inp = open(os.path.join(dir, "stats", self.name + ".csv"))
+			inp = open(self.path)
+			self.task.begin_stat(self)
 			for l in inp.readlines():
 				fs = l[:-1].split("\t")
 				assert len(fs) == 4
-				task.collect(self.name, int(fs[0]), int(fs[1], 16), int(fs[2]), "[%s]" % fs[3][1:-1])
+				self.task.collect(self,
+					int(fs[0]),
+					int(fs[1], 16),
+					int(fs[2]),
+					"[%s]" % fs[3][1:-1])
+			self.task.end_stat(self)
 		except OSError as e:
-			fatal("cannot open statistics %s: %s." % (self.stat, e))
+			fatal("cannot open statistics %s: %s." % (self.name, e))
 
-	def init(self):
-		self.map = {}
-		self.max = 0
-		for g in TASK.cfgs:
+	def ensure_load(self):
+		"""Ensure that statistics data has been loaded."""
+		if not self.loaded:
+			self.load()
+			self.loaded = True
+
+	def record_source(self, source):
+		"""Record data in the given source."""
+		self.ensure_load()
+		for g in self.task.cfgs:
 			for b in g.verts:
 				if b.type == BLOCK_CODE:
 					for (f, l) in b.lines:
-
-						# get file
-						try:
-							file = self.map[f]
-						except KeyError:
-							file = []
-							self.map[f] = file
-
-						# get line
-						try:
-							file[l] = file[l] + b.get_val(self.name)
-						except IndexError:
-							file += [0] * (l + 1 - len(file))
-							file[l] = b.get_val(self.name)
-
-						# compute max
-						self.max = max(self.max, file[l])
+						if f == source.name:
+							if source.data[l-1] == None:
+								source.data[l-1] = Data()
+							source.data[l-1].add_val(self, b.get_val(self))
 
 	def get_max(self):
-		if self.map == None:
-			self.init()
-		return self.max
+		self.ensure_load()
+		return self.task.max.get_val(self)
 
-	def get_line(self, file, line):
-		"""Get the statistics for the given line."""
-		if self.map == None:
-			self.init()
-		try:
-			return self.map[file][line]
-		except (IndexError, KeyError):
-			return 0
-
-	def get_file(self, file):
-		"""Get the statistics for the give file."""
-		if self.map == None:
-			self.init()
-		try:
-			return self.map[file]
-		except KeyError:
-			return []
-
-
-
-######### To integrate ########
+	def get_sum(self):
+		self.ensure_load()
+		return self.task.sum.get_val(self)
 
 
 ######### Template preprocessing #########
@@ -702,19 +758,20 @@ def preprocess(path, map):
 	"""Preprocess the given path containing string of the form ${ID}
 	and getting the ID from the map. Return the preprocessed file
 	as a string."""
-	out = ""
+	out = StringBuffer()
 	for l in open(path, "r"):
 		while l:
 			m = EXPAND_VAR.search(l)
 			if not m:
-				out = out + l
+				out.write(l)
 				break
 			else:
-				print(l, "\n", m.group(1), m.group(2), m.group(3))
+				#print(l, "\n", m.group(1), m.group(2), m.group(3))
 				r = map[m.group(2)]()
-				out = out + m.group(1) + r
+				out.write(m.group(1))
+				out.write(r)
 				l = m.group(3)
-	return out
+	return out.to_utf8()
 
 		
 def get_functions():
@@ -723,7 +780,7 @@ def get_functions():
 	n = 0
 	for f in TASK.cfgs:
 		out.write(
-			'<div><a href="javascript:show_function(%s, \'%s\');">%s</a></div>' \
+			'<div><a href="javascript:show_function(%s, \'%s\', 0);">%s</a></div>' \
 			% (n, f.label, f.label)
 		)
 		n = n + 1
@@ -732,33 +789,21 @@ def get_functions():
 
 def get_sources():
 	"""Generate HTML to access the sources of the current task."""
-
-	# build the list of sources
-	map = {}
-	for g in TASK.cfgs:
-		for v in g.verts:
-			if v.type == BLOCK_CODE:
-				for l in v.lines:
-					src = l[0]
-					if src not in map:
-						path = SOURCE_MANAGER.find_actual_path(src)
-						if path:
-							map[src] = path
-
-	# generate the HTML
-	out = ""
-	srcs = list(map.keys())
+	out = StringBuffer()
+	srcs = list(TASK.get_sources())
 	srcs.sort()
 	for src in srcs:
-		out = out + """<div><a href="javascript:show_source('%s')">%s</a></div>""" % (map[src], src)
-	return out
+		out.write("""<div><a href="javascript:show_source('%s')">%s</a></div>""" \
+			% (src.name, src.name))
+	return out.to_str()
 
 
 def get_stats():
-	out = '<option selected>No stat.</option>';
-	for s in STATS:
-		out = out + "<option>%s</option>" % s.name
-	return out
+	out = StringBuffer()
+	out.write('<option selected>No stat.</option>')
+	for s in TASK.stats:
+		out.write("<option>%s</option>" % s.name)
+	return out.to_str()
 
 
 def get_stat_colors():
@@ -770,21 +815,13 @@ def get_stat_colors():
 	out.write(");\n")
 	return out.to_str();
 
-def get_application():
-	return APPLICATION
-
-def get_task():
-	return TASK.name
-
-def get_host():
-	return HOST
 
 INDEX_MAP = {
 	"functions":	get_functions,
 	"sources":		get_sources,
 	"stats":		get_stats,
 	"stat-colors":	get_stat_colors,
-	"application":	lambda: APPLICATION,
+	"application":	lambda: os.path.basename(os.path.splitext(TASK.exec)[0]),
 	"task":			lambda: TASK.name,
 	"host":			lambda: HOST,
 	"port":			lambda: str(PORT)
@@ -804,7 +841,7 @@ def do_source(comps, query = {}):
 		stat = query["stat"]
 	except KeyError:
 		stat = None
-	source = SOURCE_MANAGER.find(path)
+	source = TASK.find_source(path)
 	if source == None:
 		return 500, {"content-Type": "text/plain"}, b"source not available"
 	else:
@@ -815,33 +852,44 @@ def do_source(comps, query = {}):
 
 
 def do_source_stat(comps, query):
-	stat = STATS[int(query["stat"]) - 1]
+	stat = TASK.stats[int(query["stat"]) - 1]
+	stat.ensure_load()
+	source = TASK.find_source(query["src"])
 	out = StringBuffer();
-	out.write("0 %d" % stat.get_max())
-	lines = stat.get_file(query["src"])
-	for i in range(0, len(lines)):
-		if lines[i] != 0:
-			out.write(" %d %d" % (i, lines[i]))
+	out.write("0 %d" % TASK.get_source_manager().get_max(stat))
+	for i in range(0, len(source.get_lines())):
+		x = source.get_stat(i, stat)
+		if x != 0:
+			out.write(" %d %d" % (i, x))
 	return 200, {"content-Type": "text/plain"}, out.make()
 
 
 def do_function(comps, query):
 	g = TASK.cfgs[int(comps[0])]
 
+	# define colorizer
+	stat = int(query['stat'])
+	if stat == 0:
+		col = Decorator(TASK)
+	else:
+		for s in TASK.stats:
+			s.ensure_load()
+		col = ColorDecorator(TASK, TASK.stats[stat - 1])
+
 	# generate the dot
 	(handle, path)  = tempfile.mkstemp(suffix=".dot", text=True)
-	#print(path)
 	out = os.fdopen(handle, "w")
-	g.gen(out, with_source = True)
+	g.gen(out, with_source = True, decorator = col)
 	out.close()
 
 	# generate the SVG
 	r = subprocess.run([DOT_PATH, path, "-Tsvg"], capture_output = True)
 	if r.returncode != 0:
+		print("ERROR: faulty .dot file:", path)
 		return (
-			500,
+			200,
 			{},
-			StringBuffer("Cannot generate the CFG: %s" % str(r.returncode)).to_utf8()
+			StringBuffer("<p>Cannot generate the CFG: %s</p>" % r.returncode).to_xml()
 		)
 
 	# clean up
@@ -871,10 +919,9 @@ def router(path='', query={}):
 		if comps[1] == "index.html":
 			return 200, \
 				{}, \
-				preprocess(path, INDEX_MAP).encode('utf-8')
+				preprocess(path, INDEX_MAP)
 		else:
 			r = mimetypes.guess_type(path)
-			print("DEBUG:", path, r)
 			return 200, \
 				{"Content-Type": r[0]}, \
 				open(path, 'rb').read()
@@ -987,19 +1034,14 @@ def main():
 
 	# load task information
 	exe_dir = os.path.dirname(os.path.splitext(args.executable)[0])
-	APPLICATION = os.path.basename(os.path.splitext(args.executable)[0])
 	if not args.task:
 		task_name = "main"
 	else:
 		task_name = args.task
-	task_path = os.path.join(exe_dir, task_name + "-otawa")
-	TASK = Task(task_name, task_path)
-	STATS = []
-	for s in glob.glob(os.path.join(task_path, "stats/*.csv")):
-			stat = Statistic(os.path.basename(s)[:-4])
-			STATS.append(stat)
-			stat.load(task_path, TASK)
-	SOURCE_MANAGER = SourceManager([exe_dir])
+	task_dir = os.path.join(exe_dir, task_name + "-otawa")
+	TASK = Task(args.executable, task_name, task_dir)
+	for s in glob.glob(os.path.join(task_dir, "stats/*.csv")):
+		stat = Statistic(TASK, os.path.basename(s)[:-4], s)
 
 	# start browser and server
 	Thread(target=partial(open_browser, PORT)).start()

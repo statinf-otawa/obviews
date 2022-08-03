@@ -59,13 +59,11 @@ function cfg_transform() {
 	var t =
 		`scale(${CFG.scale}, ${CFG.scale}) translate(${CFG.pos.x}px, ${CFG.pos.y}px)`;
 	CFG.cont.style.transform = t;
-	//console.log("CFG transform: " + t);
 }
 
 
 function cfg_onmousedown(e) {
 	if(e.button == 0) {
-		//console.log("down: " + e.x + ", " + e.y + ", " + e.button);
 		CFG.panning = true;
 		CFG.prev.x = e.x;
 		CFG.prev.y = e.y;
@@ -79,7 +77,6 @@ function cfg_onmousemove(e) {
 		var dy = e.y - CFG.prev.y;
 		CFG.prev.x = e.x;
 		CFG.prev.y = e.y;
-		//console.log("move: " + dx + ", " + dy);
 		CFG.pos.x = CFG.pos.x + dx / CFG.scale;
 		CFG.pos.y = CFG.pos.y + dy / CFG.scale;
 		cfg_transform();
@@ -111,7 +108,7 @@ function display_in_code(msg) {
 }
 
 function fill_node(node, color) {
-	console.log("fill_node " + node);
+	//console.log("fill_node " + node);
 	if(node.children[1].tagName == "g")
 		node = node.children[1].children[0].children[0];
 	else
@@ -152,7 +149,7 @@ function display_stat(answer) {
 			let n = parseInt(a[i]);
 			let g = document.getElementById("node" + (n + 1));
 			let x = parseInt(a[i + 1]);
-			let c = Math.floor((x - 1) * n / max);
+			let c = Math.floor((x - 1) * COLORS.length / max);
 			fill_node(g, COLORS[c]);
 		}
 	}

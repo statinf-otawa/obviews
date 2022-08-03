@@ -104,15 +104,99 @@ function cfg_onwheel(e) {
 	cfg_transform();
 }
 
-
 function display_in_code(msg) {
 	var code = document.getElementById("code");
 	code.innerHTML = `<div class="hint">${msg}</div>`;
 	MAIN.mode = MODE_NOTHING;
 }
 
+function fill_node(node, color) {
+	console.log("fill_node " + node);
+	if(node.children[1].tagName == "g")
+		node = node.children[1].children[0].children[0];
+	else
+		node = node.children[1];
+	node.setAttribute("fill", color);
+}
+
+
+
+/****** Statistics display ******/
+
+function display_stat(answer) {
+	let a = answer.split(" ");
+
+	// Source case
+	if(MAIN.mode == MODE_SOURCE) {
+		var t = document.getElementById("stats");
+		t = t.children[0]
+		//console.log(answer);
+		let a = answer.split(" ");
+		t.children[0].children[2].innerHTML = MAIN.name;
+		let max = parseInt(a[1]);
+		let n = COLORS.length;
+		for(let i = 2; i < a.length; i += 2) {
+			let l = parseInt(a[i]);
+			let x = parseInt(a[i + 1]);
+			let c = Math.floor((x - 1) * n / max);
+			t.children[l].style.backgroundColor = COLORS[c];
+			t.children[l].children[2].innerHTML = "" + x;
+		}
+	}
+
+	// Function case
+	else if(MAIN.mode == MODE_FUNCTION) {
+		clear_function_stat();
+		let max = parseInt(a[0])
+		for(let i = 1; i < a.length; i+= 2) {
+			let n = parseInt(a[i]);
+			let g = document.getElementById("node" + (n + 1));
+			let x = parseInt(a[i + 1]);
+			let c = Math.floor((x - 1) * n / max);
+			fill_node(g, COLORS[c]);
+		}
+	}
+}
+
+function show_stat(stat, name) {
+	MAIN.stat = stat;
+	MAIN.stat_name = name;
+	cmd = null;
+
+	// Source case
+	if(MAIN.mode == MODE_SOURCE) {
+		if(stat == 0)
+			clear_source_stat();
+		else
+			cmd = "source-stat";
+	}
+
+	// Function case
+	else if(MAIN.mode == MODE_FUNCTION) {
+		if(stat == 0)
+			clear_function_stat();
+		else
+			cmd = "function-stat";
+	}
+	
+	// issue command if required
+	if(cmd != null) {
+		url  = new URL(`http://${HOST}:${PORT}/${cmd}`);
+		url.searchParams.append("stat", stat);
+		url.searchParams.append("id", MAIN.id);
+		ajaxGet(url, display_stat);
+	}
+}
+
 
 /****** Function display ******/
+
+function clear_function_stat() {
+	var g = document.getElementById("graph0");
+	for(let c of g.getElementsByTagName("g"))
+		if(c.id.startsWith("node"))
+			fill_node(c, "none");
+}
 
 function display_function(answer) {
 	var code = document.getElementById("code");
@@ -127,9 +211,12 @@ function display_function(answer) {
 	code.onmousemove = cfg_onmousemove;
 	code.onmouseup = cfg_onmouseup;
 	code.addEventListener("wheel", cfg_onwheel);
+
+	if(MAIN.stat != 0)
+		show_stat(MAIN.stat, MAIN.stat_name);
 }
 
-function show_function(num, name, stat) {
+function show_function(num, name) {
 	MAIN.id = num;
 	MAIN.name = name;
 	display_in_code(`Loading function ${name}`);
@@ -159,6 +246,9 @@ function display_source(response) {
 	var name = document.getElementById("main-name");
 	name.innerHTML = MAIN.name;
 	MAIN.mode = MODE_SOURCE;
+
+	if(MAIN.stat != 0)
+		show_stat(MAIN.stat, MAIN.stat_name);
 }
 
 function show_source(path) {
@@ -167,61 +257,6 @@ function show_source(path) {
 	MAIN.name = path;
 	let url = `http://${HOST}:${PORT}/source/${path}`;
 	ajaxGet(url, display_source);
-}
-
-
-/****** Statistics display ******/
-
-function display_stat(answer) {
-
-	// Source case
-	if(MAIN.mode == MODE_SOURCE) {
-		var t = document.getElementById("stats");
-		t = t.children[0]
-		//console.log(answer);
-		let a = answer.split(" ");
-		t.children[0].children[2].innerHTML = MAIN.name;
-		let max = parseInt(a[1]);
-		let n = COLORS.length;
-		for(let i = 2; i < a.length; i += 2) {
-			let l = parseInt(a[i]);
-			let x = parseInt(a[i + 1]);
-			let c = Math.floor((x - 1) * n / max);
-			t.children[l].style.backgroundColor = COLORS[c];
-			t.children[l].children[2].innerHTML = "" + x;
-		}
-	}
-
-	// Function case
-	else if(MAIN.mode == MODE_FUNCTION) {
-		display_function(answer);
-	}
-}
-
-function show_stat(stat, name) {
-	MAIN.stat = stat;
-	MAIN.stat_name = name;
-
-	// Source case
-	if(MAIN.mode == MODE_SOURCE) {
-		if(stat == 0)
-			clear_source_stat();
-		else {
-			url = new URL(`http://${HOST}:${PORT}/source-stat`);
-			url.searchParams.append("stat", stat);
-			url.searchParams.append("src", MAIN.id);
-			ajaxGet(url, display_stat);
-		}		
-	}
-
-	// Function case
-	else if(MAIN.mode == MODE_FUNCTION) {
-		display_in_code(`Loading ${stat} for function ${name}`);
-		ajaxGet(
-			new URL(`http://${HOST}:${PORT}/function/${MAIN.id}?stat=${stat}`),
-			display_function
-		)
-	}
 }
 
 

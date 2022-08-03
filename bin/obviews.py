@@ -382,10 +382,9 @@ class Decorator:
 
 class BaseDecorator(Decorator):
 	
-	def __init__(self, task, stat):
+	def __init__(self, task):
 		Decorator.__init__(self, task)
 		self.task = task
-		self.stat = stat
 	
 	def bb_label(self, bb, out):
 		for stat in self.task.stats:
@@ -397,7 +396,8 @@ class BaseDecorator(Decorator):
 class ColorDecorator(BaseDecorator):
 
 	def __init__(self, task, stat):
-		BaseDecorator.__init__(self, task, stat)
+		BaseDecorator.__init__(self, task)
+		self.stat = stat
 
 	def bb_attrs(self, bb, out):
 		if bb.type == BLOCK_CALL:
@@ -510,6 +510,7 @@ class CFG:
 		self.sum = Data()
 	
 	def add(self, block):
+		block.number = len(self.verts)
 		self.verts.append(block)
 
 	def begin_stat(self, id):
@@ -538,7 +539,8 @@ class CFG:
 			elif b.type == BLOCK_EXIT:
 				out.write("label=\"exit\"")
 			elif b.type == BLOCK_CALL:
-				out.write("URL=\"%s\",label=\"call %s\",shape=\"box\"" % (b.callee.id, b.callee.label))
+				out.write("URL=\"javascript:show_function(%d, '%s')\",label=\"call %s\",shape=\"box\"" \
+					% (b.callee.number, b.callee.label, b.callee.label))
 			else:
 				num = b.id[b.id.find("-") + 1:]
 				out.write("margin=0,shape=\"box\",label=<<table border='0' cellpadding='8px'><tr><td>BB %s (%x:%s)</td></tr><hr/><tr><td align='left'>" % (num, b.base, b.size))
@@ -642,6 +644,7 @@ class Task:
 				
 				# build the CFG
 				cfg = CFG(id, n.attrib["label"], ctx)
+				cfg.number = len(self.cfgs)
 				self.cfgs.append(cfg)
 				cfg_map[id] = cfg
 				cfg.node = n
@@ -780,7 +783,7 @@ def get_functions():
 	n = 0
 	for f in TASK.cfgs:
 		out.write(
-			'<div><a href="javascript:show_function(%s, \'%s\', 0);">%s</a></div>' \
+			'<div><a href="javascript:show_function(%s, \'%s\');">%s</a></div>' \
 			% (n, f.label, f.label)
 		)
 		n = n + 1
@@ -854,7 +857,7 @@ def do_source(comps, query = {}):
 def do_source_stat(comps, query):
 	stat = TASK.stats[int(query["stat"]) - 1]
 	stat.ensure_load()
-	source = TASK.find_source(query["src"])
+	source = TASK.find_source(query["id"])
 	out = StringBuffer();
 	out.write("0 %d" % TASK.get_source_manager().get_max(stat))
 	for i in range(0, len(source.get_lines())):
@@ -867,14 +870,10 @@ def do_source_stat(comps, query):
 def do_function(comps, query):
 	g = TASK.cfgs[int(comps[0])]
 
-	# define colorizer
-	stat = int(query['stat'])
-	if stat == 0:
-		col = Decorator(TASK)
-	else:
-		for s in TASK.stats:
-			s.ensure_load()
-		col = ColorDecorator(TASK, TASK.stats[stat - 1])
+	# define decorator
+	for s in TASK.stats:
+		s.ensure_load()
+	col = BaseDecorator(TASK)
 
 	# generate the dot
 	(handle, path)  = tempfile.mkstemp(suffix=".dot", text=True)
@@ -892,18 +891,33 @@ def do_function(comps, query):
 			StringBuffer("<p>Cannot generate the CFG: %s</p>" % r.returncode).to_xml()
 		)
 
-	# clean up
-	os.remove(path)
-
 	# send the SVG
+	os.remove(path)
 	return 200, {}, r.stdout
 
 
+def do_function_stat(comps, query):
+	stat = TASK.stats[int(query["stat"]) - 1]
+	stat.ensure_load()
+	g = TASK.cfgs[int(query["id"])]
+	out = StringBuffer()
+	out.write(str(TASK.get_max(stat)))
+	for v in g.verts:
+		if v.type == BLOCK_CALL:
+			x = v.callee.max.get_val(stat)
+		else:
+			x = v.get_val(stat)
+		if x != 0:
+			out.write(" %d %d" % (v.number, x))
+	return 200, {"content-Type": "text/plain"}, out.to_utf8()
+
+
 DO_MAP = {
-	"stop": 		do_stop,
-	"source":		do_source,
-	"source-stat":	do_source_stat,
-	"function":		do_function
+	"stop": 			do_stop,
+	"source":			do_source,
+	"source-stat":		do_source_stat,
+	"function":			do_function,
+	"function-stat":	do_function_stat
 }
 
 def router(path='', query={}):

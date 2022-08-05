@@ -44,6 +44,8 @@ from threading import Thread
 
 
 ######### global state #########
+VERBOSE = False
+DEBUG = False
 HOST = '127.0.0.1'
 PORT = 8000
 DATA_DIR = None
@@ -1021,29 +1023,30 @@ DO_MAP = {
 	"stat-info":		do_stat_info
 }
 
-def router(path='', query={}):
-	"""Process a request and return the anwer."""
-
-	comps = path.split('/', 2)
-	try:
-		return DO_MAP[comps[1]](comps[2:], query)
-	except KeyError:
-		if comps[1] == "":
-			comps[1] = "index.html"
-		path = os.path.join(DATA_DIR, "/".join(comps[1:]))
-		if comps[1] == "index.html":
-			return 200, \
-				{}, \
-				preprocess(path, INDEX_MAP)
-		else:
-			r = mimetypes.guess_type(path)
-			return 200, \
-				{"Content-Type": r[0]}, \
-				open(path, 'rb').read()
 
 
 class Handler(BaseHTTPRequestHandler):
 	"""Handle HTTP requests."""
+
+	def route(self, path='', query={}):
+		"""Process a request and return the anwer."""
+
+		comps = path.split('/', 2)
+		try:
+			return DO_MAP[comps[1]](comps[2:], query)
+		except KeyError:
+			if comps[1] == "":
+				comps[1] = "index.html"
+			path = os.path.join(DATA_DIR, "/".join(comps[1:]))
+			if comps[1] == "index.html":
+				return 200, \
+					{}, \
+					preprocess(path, INDEX_MAP)
+			else:
+				r = mimetypes.guess_type(path)
+				return 200, \
+					{"Content-Type": r[0]}, \
+					open(path, 'rb').read()
 
 	def do_GET(self):
 	
@@ -1053,16 +1056,19 @@ class Handler(BaseHTTPRequestHandler):
 
 		# manage the request
 		quit = False
-		#try:
-		response_code , headers, data = router(urlP.path, query)
+		if not DEBUG:
+			response_code , headers, data = self.route(urlP.path, query)
+		else:
+			try:
+				response_code , headers, data = self.route(urlP.path, query)
+			except Exception as err:
+				print(err)
+				response_code = 500
+				headers = {}
+				data = str(err).encode('utf-8')
 		if response_code == 666:
 			quit = True
 			response_code = 204
-		#except Exception as err:
-		#	print(err)
-		#	response_code = 500
-		#	headers = {}
-		#	data = str(err).encode('utf-8')
 
 		# build the answer
 		if type(response_code) is tuple:
@@ -1089,7 +1095,8 @@ class StartServer(Thread):
 		self.server = None
 
 	def run(self):
-		print("run server at HOST: " + HOST + " and PORT: " + str(PORT))
+		if VERBOSE:
+			print("run server at HOST: " + HOST + " and PORT: " + str(PORT))
 		with HTTPServer((HOST, PORT), handler) as self.server:
 			self.server.serve_forever()
 

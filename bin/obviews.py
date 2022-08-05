@@ -25,6 +25,7 @@ import datetime
 import glob
 import io
 import json
+import logging
 import mimetypes
 import os
 import re
@@ -1089,24 +1090,6 @@ class Handler(BaseHTTPRequestHandler):
 	do_POST = do_GET
 
 
-class StartServer(Thread):
-	def __init__(self):
-		super().__init__()
-		self.server = None
-
-	def run(self):
-		if VERBOSE:
-			print("run server at HOST: " + HOST + " and PORT: " + str(PORT))
-		with HTTPServer((HOST, PORT), handler) as self.server:
-			self.server.serve_forever()
-
-	def stop(self):
-		if (self.server is not None):
-			self.server.shutdown()
-			self.server.server_close()
-			self.server = None
-
-
 ######### Start-up #########
 
 def open_browser(port):
@@ -1166,6 +1149,7 @@ def main():
 		stat = Statistic(TASK, os.path.basename(s)[:-4], s)
 
 	# start browser and server
+		#logging.getLogger("requests").setLevel(logging.NOTSET)
 	Thread(target=partial(open_browser, PORT)).start()
 	with HTTPServer((HOST, PORT), Handler) as server:
 		server.serve_forever()

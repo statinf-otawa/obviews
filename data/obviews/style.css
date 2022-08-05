@@ -248,12 +248,27 @@ div.top div.menu {
 	float: right;
 }
 
+/* left part */
+div.left {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	overflow: clip;
+}
+
+/* infos part */
+div.infos {
+	flex: 1;
+	margin-right: 8px;
+	margin-top: 8px; 
+}
+
 /* list part */
 div.list {
 	display: inline-block;
 	float: left;
 	overflow: scroll;
-	flex: 1;
+	flex: 4;
 	margin-right: 8px;
 }
 div.items {

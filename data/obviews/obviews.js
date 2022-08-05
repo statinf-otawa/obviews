@@ -120,6 +120,11 @@ function fill_node(node, color) {
 
 /****** Statistics display ******/
 
+function display_info(answer) {
+	var t = document.getElementById("infos");
+	t.innerHTML = answer;
+}
+
 function display_stat(answer) {
 	let a = answer.split(" ");
 
@@ -129,7 +134,7 @@ function display_stat(answer) {
 		t = t.children[0]
 		//console.log(answer);
 		let a = answer.split(" ");
-		t.children[0].children[2].innerHTML = MAIN.name;
+		t.children[0].children[2].innerHTML = MAIN.stat_name;
 		let max = parseInt(a[1]);
 		let n = COLORS.length;
 		for(let i = 2; i < a.length; i += 2) {
@@ -153,6 +158,12 @@ function display_stat(answer) {
 			fill_node(g, COLORS[c]);
 		}
 	}
+
+	// display info if required
+	if(MAIN.stat != 0)
+		ajaxGet(
+			`http://${HOST}:${PORT}/stat-info?stat=${MAIN.stat}`,
+			display_info);
 }
 
 function show_stat(stat, name) {

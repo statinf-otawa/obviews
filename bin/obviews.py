@@ -37,6 +37,9 @@ TASK = None
 def error(msg):
 	sys.stderr.write("ERROR: %s\n" % msg)
 
+def warn(msg):
+	sys.stderr.write("WARNING: %s\n" % msg)
+
 def fatal(msg):
 	error(msg)
 	exit(1)
@@ -695,6 +698,14 @@ class Task:
 
 ########## Statistics ########
 
+DEF_RE = re.compile("#\s*(\S+):\s*(.*)")
+OP_MAX = lambda d, s, x: d.max_val(s, x)
+OP_SUM = lambda d, s, x: d.add_val(s, x)
+OP_MAP = {
+	"sum":	OP_SUM,
+	"max":	OP_MAX
+}
+
 class Statistic:
 	"""Record information about statistics."""
 	name = None
@@ -705,23 +716,82 @@ class Statistic:
 		self.task = task
 		self.name = name
 		self.path = path
-		self.loaded = False
+		self.label = name
+		self.line_op = OP_SUM
+		self.concat_op = OP_SUM
+		self.context_op = OP_MAX
+		self.unit = None
+		self.defs = {}
+		self.number = len(task.stats)
+		self.total = 0
+		self.description = ""
 		task.stats.append(self)
+		self.loaded = False
+		self.pre_loaded = False
+
+	def get_def(self, id, d):
+		if id not in self.defs:
+			return d
+		x = self.defs[id]
+		del self.defs[id]
+		return x
+
+	def get_op(self, id, d):
+		op = self.get_def(id, None)
+		if op == None:
+			return d
+		else:
+			try:
+				return OP_MAP[op]
+			except KeyError:
+				warn("unknown line-op operator (%s) for %s"
+					% (self.defs["LineOperation"], self.name))
+				return d
+
+	def preload(self):
+		"""Load definitions from the statistics."""
+
+		# read the file
+		try:
+			inp = open(self.path)
+			for l in inp.readlines():
+				if l and l[0] == "#":
+					m = DEF_RE.match(l)
+					if m:
+						self.defs[m.group(1)] = m.group(2).strip(" \t\n")
+		except OSError as e:
+			fatal("cannot open statistics %s: %s." % (self.name, e))
+
+		# consume useful defs
+		self.label = self.get_def("Label", self.name)
+		self.unit = self.get_def("Unit", self.unit)
+		self.total = self.get_def("Total", self.unit)
+		self.description = self.get_def("Description", self.unit)
+		self.line_op = self.get_op("LineOp", OP_SUM)
+		self.concat_op = self.get_op("ConcatOp", OP_SUM)
+		self.context_op = self.get_op("ContextOp", OP_SUM)
+
+	def ensure_preload(self):
+		if not self.pre_loaded:
+			self.preload()
+			self.pre_loaded = True
 
 	def load(self):
 		"""Load statistics data from the file."""
 		try:
-			#inp = open(os.path.join(dir, "stats", self.name + ".csv"))
 			inp = open(self.path)
 			self.task.begin_stat(self)
 			for l in inp.readlines():
-				fs = l[:-1].split("\t")
-				assert len(fs) == 4
-				self.task.collect(self,
-					int(fs[0]),
-					int(fs[1], 16),
-					int(fs[2]),
-					"[%s]" % fs[3][1:-1])
+				if l and l[0] == "#":
+					continue
+				else:
+					fs = l[:-1].split("\t")
+					assert len(fs) == 4
+					self.task.collect(self,
+						int(fs[0]),
+						int(fs[1], 16),
+						int(fs[2]),
+						"[%s]" % fs[3][1:-1])
 			self.task.end_stat(self)
 		except OSError as e:
 			fatal("cannot open statistics %s: %s." % (self.name, e))
@@ -802,10 +872,12 @@ def get_sources():
 
 
 def get_stats():
+	for s in TASK.stats:
+		s.ensure_preload()
 	out = StringBuffer()
 	out.write('<option selected>No stat.</option>')
 	for s in TASK.stats:
-		out.write("<option>%s</option>" % s.name)
+		out.write("<option>%s</option>" % s.label)
 	return out.to_str()
 
 
@@ -912,12 +984,22 @@ def do_function_stat(comps, query):
 	return 200, {"content-Type": "text/plain"}, out.to_utf8()
 
 
+def do_stat_info(comps, query):
+	stat = TASK.stats[int(query["stat"]) - 1]
+	out = StringBuffer()
+	out.write("<div>")
+	for (k, v) in stat.defs.items():
+		out.write("<b>%s:</b> %s<br/>" % (k, v))
+	out.write("</div>")
+	return 200, {}, out.to_xml()
+
 DO_MAP = {
 	"stop": 			do_stop,
 	"source":			do_source,
 	"source-stat":		do_source_stat,
 	"function":			do_function,
-	"function-stat":	do_function_stat
+	"function-stat":	do_function_stat,
+	"stat-info":		do_stat_info
 }
 
 def router(path='', query={}):

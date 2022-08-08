@@ -504,6 +504,7 @@ BLOCK_ENTRY = 0
 BLOCK_EXIT = 1
 BLOCK_CODE = 2
 BLOCK_CALL = 3
+BLOCK_UNKNOWN = 4
 
 class Data:
 	
@@ -539,6 +540,12 @@ class Data:
 		return self.data[id]
 
 
+BLOCK_LABEL_MAP = {
+	BLOCK_ENTRY:	"entry",
+	BLOCK_EXIT:		"exit",
+	BLOCK_UNKNOWN:	"unknown"
+}
+
 class Block(Data):
 	
 	def __init__(self, type, id):
@@ -551,6 +558,9 @@ class Block(Data):
 	
 	def collect(self, id, val, addr, size, task):
 		return 0
+
+	def gen(self, decorator, out):
+		out.write("label=\"%s\"" % BLOCK_LABEL_MAP[self.type])
 	
 
 class BasicBlock(Block):
@@ -567,12 +577,27 @@ class BasicBlock(Block):
 			for (f, l) in self.lines:
 				task.sman.collect(f, l, id, val)
 
+	def gen(self, decorator, out):
+		num = self.id
+		out.write(
+			"margin=0,shape=\"box\",label=<<table border='0' cellpadding='8px'><tr><td>BB %s (%x:%s)</td></tr><hr/><tr><td align='left'>" \
+			% (num, self.base, self.size))
+		decorator.bb_label(self, out)
+		out.write("</td></tr></table>>")
+
 
 class CallBlock(Block):
 
 	def __init__(self, id, callee):
 		Block.__init__(self, BLOCK_CALL, id)
 		self.callee = callee
+
+	def gen(self, decorator, out):
+		if self.callee != None:
+			out.write("URL=\"javascript:show_function(%d, '%s')\",label=\"call %s\",shape=\"box\"" \
+				% (self.callee.id, self.callee.label, self.callee.label))
+		else:
+			out.write("label=\"call unknown\",shape=\"box\"")
 
 
 class Edge(Data):
@@ -594,6 +619,7 @@ class CFG:
 		self.verts = []
 		self.entry = None
 		self.exit = None
+		self.unknown = None
 		self.max = Data()
 		self.sum = Data()
 	
@@ -621,21 +647,7 @@ class CFG:
 		out.write("digraph %s {\n" % self.id)
 		for b in self.verts:
 			out.write("\t%s [" % b.id)
-			if b.type == BLOCK_ENTRY:
-				out.write("label=\"entry\"")
-			elif b.type == BLOCK_EXIT:
-				out.write("label=\"exit\"")
-			elif b.type == BLOCK_CALL:
-				out.write("URL=\"javascript:show_function(%d, '%s')\",label=\"call %s\",shape=\"box\"" \
-					% (b.callee.id, b.callee.label, b.callee.label))
-			else:
-				num = b.id
-				out.write("margin=0,shape=\"box\",label=<<table border='0' cellpadding='8px'><tr><td>BB %s (%x:%s)</td></tr><hr/><tr><td align='left'>" % (num, b.base, b.size))
-				if with_source:
-					decorator.bb_source(b, out)
-					out.write("</td></tr><hr/><tr><td>")
-				decorator.bb_label(b, out)
-				out.write("</td></tr></table>>")
+			b.gen(decorator, out)
 			decorator.bb_attrs(b, out)
 			out.write("];\n")
 		for b in self.verts:
@@ -715,6 +727,12 @@ class Task:
 		g = self.cfgs[-1]
 		b = Block(BLOCK_EXIT, len(g.verts))
 		g.exit = b
+		g.add(b)
+
+	def make_uknown(self, l):
+		g = self.cfgs[-1]
+		b = Block(BLOCK_uNKNOWN, len(g.verts))
+		g.unknown = b
 		g.add(b)
 
 	def make_bb(self, l):

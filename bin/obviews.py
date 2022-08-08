@@ -109,6 +109,69 @@ def escape_html(s):
 		replace("\t", "&nbsp;&nbsp;&nbsp;&nbsp;")
 
 
+DEF_RE = re.compile("#\s*(\S+):\s*(.*)")
+class CSV:
+
+	def __init__(self, path):
+		self.path = path
+		self.defs = None
+		self.input = None
+		self.line = None
+
+	def open(self):
+		self.input = open(self.path, encoding='utf-8')
+		return self.read_line()
+
+	def read_line(self):
+		l = self.input.readline()
+		if l == '':
+			return None
+		elif len(l) >= 1 and l[-1] == '\n':
+			return l[:-1]
+		else:
+			return l
+
+	def close(self):
+		self.input.close()
+
+	def read_defs(self):
+		if self.defs == None:
+			self.defs = {}
+			l = self.open()
+			while l != None:
+				if not l or l[0] != "#":
+					self.line = l
+					break
+				m = DEF_RE.match(l)
+				if m:
+					self.defs[m.group(1)] = m.group(2).strip(" \t\n")
+				l = self.read_line()
+
+	def emit(self, l):
+		if l != '':
+			yield l.split(' ')
+
+	def read_all(self):
+		if self.input == None:
+			self.read_defs()
+		l = self.line
+		while l != None:
+			yield l.split(' ')
+			l = self.read_line()
+		self.close()
+
+	def consume(self, id, d):
+		if id not in self.defs:
+			return d
+		x = self.defs[id]
+		del self.defs[id]
+		return x
+
+	def all_defs(self):
+		return self.defs
+
+
+
 
 ######## Source management #########
 
@@ -535,7 +598,6 @@ class CFG:
 		self.sum = Data()
 	
 	def add(self, block):
-		block.number = len(self.verts)
 		self.verts.append(block)
 
 	def begin_stat(self, id):
@@ -558,16 +620,16 @@ class CFG:
 
 		out.write("digraph %s {\n" % self.id)
 		for b in self.verts:
-			out.write("\t%s [" % norm(b.id))
+			out.write("\t%s [" % b.id)
 			if b.type == BLOCK_ENTRY:
 				out.write("label=\"entry\"")
 			elif b.type == BLOCK_EXIT:
 				out.write("label=\"exit\"")
 			elif b.type == BLOCK_CALL:
 				out.write("URL=\"javascript:show_function(%d, '%s')\",label=\"call %s\",shape=\"box\"" \
-					% (b.callee.number, b.callee.label, b.callee.label))
+					% (b.callee.id, b.callee.label, b.callee.label))
 			else:
-				num = b.id[b.id.find("-") + 1:]
+				num = b.id
 				out.write("margin=0,shape=\"box\",label=<<table border='0' cellpadding='8px'><tr><td>BB %s (%x:%s)</td></tr><hr/><tr><td align='left'>" % (num, b.base, b.size))
 				if with_source:
 					decorator.bb_source(b, out)
@@ -578,7 +640,7 @@ class CFG:
 			out.write("];\n")
 		for b in self.verts:
 			for e in b.next:
-				out.write("\t%s -> %s;\n" % (norm(e.src.id), norm(e.snk.id)))
+				out.write("\t%s -> %s;\n" % (e.src.id, e.snk.id))
 
 		decorator.cfg_label(self, out)
 		out.write("\n}\n")
@@ -599,6 +661,7 @@ class Task:
 		self.stats = []
 		self.sman = SourceManager([os.path.dirname("exec")])
 		self.read()
+		self.defs = {}
 
 	def get_max(self, stat):
 		return self.max.get_val(stat)
@@ -637,90 +700,70 @@ class Task:
 			g.end_stat(id)
 			self.max.max_val(id, g.max.get_val(id))
 			self.sum.add_val(id, g.sum.get_val(id))
+
+	def make_cfg(self, l):
+		g = CFG(len(self.cfgs), l[1], ' '.join(l[2:]))
+		self.cfgs.append(g)
+
+	def make_entry(self, l):
+		g = self.cfgs[-1]
+		b = Block(BLOCK_ENTRY, len(g.verts))
+		g.entry = b
+		g.add(b)
+
+	def make_exit(self, l):
+		g = self.cfgs[-1]
+		b = Block(BLOCK_EXIT, len(g.verts))
+		g.exit = b
+		g.add(b)
+
+	def make_bb(self, l):
+		g = self.cfgs[-1]
+		b = BasicBlock(
+			len(g.verts),
+			int(l[1], 16),
+			int(l[2]))
+		g.add(b)
+
+	def make_call(self, l):
+		g = self.cfgs[-1]
+		b = CallBlock(len(g.verts), int(l[1]))
+		g.add(b)
+
+	def make_edge(self, l):
+		g = self.cfgs[-1]
+		Edge(g.verts[int(l[1])], g.verts[int(l[2])])
 	
 	def read(self):
 		"""Read the task from the file."""
-		cfg_path = os.path.join(self.path, "stats/cfg.xml")
+		path = os.path.join(self.path, "cfg.csv")
+		map = {
+			'G': self.make_cfg,
+			'N': self.make_entry,
+			'X': self.make_exit,
+			'B': self.make_bb,
+			'C': self.make_call,
+			'E': self.make_edge
+		}
 		try:
 
-			# open the file
-			doc = ET.parse(cfg_path)
-			root = doc.getroot()
-			if root.tag != "cfg-collection":
-				raise IOError("bad XML type")
+			# parse definitions
+			csv = CSV(path)
+			for l in csv.read_all():
+				map[l[0]](l)
 
-			# prepare CFGS
-			cfg_map = {}
-			for n in root.iter("cfg"):
-				id = n.attrib["id"]
-				
-				# look for context
-				try:
-					ctx = n.attrib["context"]
-				except KeyError:
-					ctx = ""
-					for p in n.iter("property"):
-						try:
-							if p.attrib["identifier"] == "otawa::CONTEXT":
-								ctx = p.text
-								break
-						except KeyError:
-							pass
-				
-				# build the CFG
-				cfg = CFG(id, n.attrib["label"], ctx)
-				cfg.number = len(self.cfgs)
-				self.cfgs.append(cfg)
-				cfg_map[id] = cfg
-				cfg.node = n
+			# fix call blocks
+			for g in self.cfgs:
+				for v in g.verts:
+					if v.type == BLOCK_CALL:
+						v.callee = self.cfgs[v.callee]
 			
-			# initialize the content of CFGs
-			for cfg in self.cfgs:
-				block_map = {}
-
-				# fill the vertices of CFG
-				for n in cfg.node:
-					try:
-						id = n.attrib["id"]
-					except KeyError:
-						continue
-					if n.tag == "entry":
-						b = Block(BLOCK_ENTRY, id)
-						cfg.entry = b
-					elif n.tag == "exit":
-						b = Block(BLOCK_EXIT, id)
-						cfg.exit = b
-					elif n.tag == "bb":
-						try:
-							b = CallBlock(id, cfg_map[n.attrib["call"]])
-						except KeyError:
-							lines = []
-							for l in n.iter("line"):
-								file = l.attrib["file"]
-								lines.append((file, int(l.attrib["line"])))
-								self.sman.find(file)
-							b = BasicBlock(id, int(n.attrib["address"], 16), int(n.attrib["size"]), lines)
-							b.lines = lines
-					else:
-						continue  
-					cfg.add(b)
-					block_map[id] = b
-				
-				# fill the edges of CFG
-				for n in cfg.node.iter("edge"):
-					Edge(block_map[n.attrib["source"]], block_map[n.attrib["target"]])
-
-				cfg.node = None
-
-		except ET.ParseError as e:
-			raise IOError("error during CFG read: %s" % e)
-		except KeyError:
-			raise IOError("malformed CFG XML file")
+		except OSError as e:
+			raise IOError("error in reading %s: %s" % (path, e))
 
 
 ########## Statistics ########
 
-DEF_RE = re.compile("#\s*(\S+):\s*(.*)")
 OP_MAX = lambda d, s, x: d.max_val(s, x)
 OP_SUM = lambda d, s, x: d.add_val(s, x)
 OP_MAP = {
@@ -751,13 +794,6 @@ class Statistic:
 		self.loaded = False
 		self.pre_loaded = False
 
-	def get_def(self, id, d):
-		if id not in self.defs:
-			return d
-		x = self.defs[id]
-		del self.defs[id]
-		return x
-
 	def get_op(self, id, d):
 		op = self.get_def(id, None)
 		if op == None:
@@ -776,11 +812,6 @@ class Statistic:
 		# read the file
 		try:
 			inp = open(self.path)
-			for l in inp.readlines():
-				if l and l[0] == "#":
-					m = DEF_RE.match(l)
-					if m:
-						self.defs[m.group(1)] = m.group(2).strip(" \t\n")
 		except OSError as e:
 			fatal("cannot open statistics %s: %s." % (self.name, e))
 
@@ -1002,7 +1033,7 @@ def do_function_stat(comps, query):
 		else:
 			x = v.get_val(stat)
 		if x != 0:
-			out.write(" %d %d" % (v.number, x))
+			out.write(" %d %d" % (v.id, x))
 	return 200, {"content-Type": "text/plain"}, out.to_utf8()
 
 
@@ -1139,11 +1170,12 @@ def main():
 
 	# load task information
 	exe_dir = os.path.dirname(os.path.splitext(args.executable)[0])
+	exe_name = os.path.basename(os.path.splitext(args.executable)[0])
 	if not args.task:
 		task_name = "main"
 	else:
 		task_name = args.task
-	task_dir = os.path.join(exe_dir, task_name + "-otawa")
+	task_dir = os.path.join(exe_dir, exe_name + "-otawa", task_name )
 	TASK = Task(args.executable, task_name, task_dir)
 	for s in glob.glob(os.path.join(task_dir, "stats/*.csv")):
 		stat = Statistic(TASK, os.path.basename(s)[:-4], s)

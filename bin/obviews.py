@@ -147,16 +147,12 @@ class CSV:
 					self.defs[m.group(1)] = m.group(2).strip(" \t\n")
 				l = self.read_line()
 
-	def emit(self, l):
-		if l != '':
-			yield l.split(' ')
-
 	def read_all(self):
 		if self.input == None:
 			self.read_defs()
 		l = self.line
 		while l != None:
-			yield l.split(' ')
+			yield l.split('\t')
 			l = self.read_line()
 		self.close()
 
@@ -673,7 +669,7 @@ class Task:
 		self.stats = []
 		self.sman = SourceManager([os.path.dirname("exec")])
 		self.read()
-		self.defs = {}
+		self.defs = None
 
 	def get_max(self, stat):
 		return self.max.get_val(stat)
@@ -775,6 +771,11 @@ class Task:
 				for v in g.verts:
 					if v.type == BLOCK_CALL:
 						v.callee = self.cfgs[v.callee]
+
+			# record defs
+			self.label = csv.consume("Label", self.name)
+			self.exec = csv.consume("Exec", None)
+			self.defs = csv.all_defs()
 			
 		except OSError as e:
 			raise IOError("error in reading %s: %s" % (path, e))
@@ -804,16 +805,16 @@ class Statistic:
 		self.concat_op = OP_SUM
 		self.context_op = OP_MAX
 		self.unit = None
-		self.defs = {}
 		self.number = len(task.stats)
 		self.total = 0
 		self.description = ""
 		task.stats.append(self)
+		self.csv = None
+		self.defs = None
 		self.loaded = False
-		self.pre_loaded = False
 
 	def get_op(self, id, d):
-		op = self.get_def(id, None)
+		op = self.csv.consume(id, None)
 		if op == None:
 			return d
 		else:
@@ -826,49 +827,39 @@ class Statistic:
 
 	def preload(self):
 		"""Load definitions from the statistics."""
-
-		# read the file
-		try:
-			inp = open(self.path)
-		except OSError as e:
-			fatal("cannot open statistics %s: %s." % (self.name, e))
-
-		# consume useful defs
-		self.label = self.get_def("Label", self.name)
-		self.unit = self.get_def("Unit", self.unit)
-		self.total = self.get_def("Total", self.unit)
-		self.description = self.get_def("Description", self.unit)
+		self.csv = CSV(self.path)
+		self.csv.read_defs()
+		self.label = self.csv.consume("Label", self.name)
+		self.unit = self.csv.consume("Unit", self.unit)
+		self.total = self.csv.consume("Total", self.unit)
+		self.description = self.csv.consume("Description", self.unit)
 		self.line_op = self.get_op("LineOp", OP_SUM)
 		self.concat_op = self.get_op("ConcatOp", OP_SUM)
 		self.context_op = self.get_op("ContextOp", OP_SUM)
+		self.defs = self.csv.all_defs()
 
 	def ensure_preload(self):
-		if not self.pre_loaded:
+		if self.defs == None:
 			self.preload()
-			self.pre_loaded = True
 
 	def load(self):
 		"""Load statistics data from the file."""
 		try:
-			inp = open(self.path)
 			self.task.begin_stat(self)
-			for l in inp.readlines():
-				if l and l[0] == "#":
-					continue
-				else:
-					fs = l[:-1].split("\t")
-					assert len(fs) == 4
-					self.task.collect(self,
-						int(fs[0]),
-						int(fs[1], 16),
-						int(fs[2]),
-						"[%s]" % fs[3][1:-1])
+			for fs in self.csv.read_all():
+				assert len(fs) == 4
+				self.task.collect(self,
+					int(fs[0]),
+					int(fs[1], 16),
+					int(fs[2]),
+					fs[3])
 			self.task.end_stat(self)
 		except OSError as e:
 			fatal("cannot open statistics %s: %s." % (self.name, e))
 
 	def ensure_load(self):
 		"""Ensure that statistics data has been loaded."""
+		self.ensure_preload()
 		if not self.loaded:
 			self.load()
 			self.loaded = True
@@ -1195,11 +1186,11 @@ def main():
 		task_name = args.task
 	task_dir = os.path.join(exe_dir, exe_name + "-otawa", task_name )
 	TASK = Task(args.executable, task_name, task_dir)
-	for s in glob.glob(os.path.join(task_dir, "stats/*.csv")):
+	for s in glob.glob(os.path.join(task_dir, "*-stat.csv")):
 		stat = Statistic(TASK, os.path.basename(s)[:-4], s)
+		stat.ensure_load()
 
 	# start browser and server
-		#logging.getLogger("requests").setLevel(logging.NOTSET)
 	Thread(target=partial(open_browser, PORT)).start()
 	with HTTPServer((HOST, PORT), Handler) as server:
 		server.serve_forever()

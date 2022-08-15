@@ -405,10 +405,11 @@ class View:
 		self.defs = self.csv.all_defs()
 		self.id = len(task.views)
 		self.level = self.id
+		task.views.append(self)
 
 	def load_line(self, l):
 		assert len(l) > 3
-		self.data[int(l[0])][int(l[1])].append((l[2], l[3]))
+		self.data[int(l[0])][int(l[1])].append((int(l[2], 16), l[3]))
 
 	def load_data(self):
 
@@ -433,11 +434,15 @@ class View:
 			self.load_data()
 		return self.data[g.id][v.id]
 
+	def prepare(self, out):
+		"""Called just befoe generting the body of a BB."""
+		pass
+
 	def gen(self, addr, code, out):
 		"""Output the code."""
 		if addr != None:
 			out.write("%08x&nbsp;" % addr)
-		out.write(code)
+		out.write(escape_html(code))
 
 
 class SourceView(View):
@@ -450,7 +455,7 @@ class SourceView(View):
 
 	def load_line(self, l):
 		file, line = l[3].split(":")
-		self.data[int(l[0])][int(l[1])].append((l[2], (file, int(line))))
+		self.data[int(l[0])][int(l[1])].append((int(l[2], 16), (file, int(line))))
 		self.task.sman.find(file)
 
 	def get_sources(self):
@@ -1142,7 +1147,8 @@ def do_function(comps, query):
 	sdec = StatDecorator(TASK)
 
 	# decorate with source
-	vdec = ViewDecorator([TASK.sview])
+	#vdec = ViewDecorator([TASK.sview])
+	vdec = ViewDecorator(TASK.views)
 
 	# put all together
 	dec = SeqDecorator([vdec, sdec])

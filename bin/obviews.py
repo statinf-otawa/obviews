@@ -456,9 +456,22 @@ class SourceView(View):
 	def get_sources(self):
 		return self.sources
 
+	def prepare(self, out):
+		self.file = None
+		self.line = None
+
 	def gen(self, addr, code, out):
 		file, line = code
-		out.write("%s:%d" % (file, line))
+		if self.file != file or self.line +1 != line: 
+			out.write("<b><font color='blue'>%s:%d:</font></b><br align='left'/>" \
+				% (escape_html(file), line))
+		self.file = file
+		self.line = line
+		source = self.task.find_source(file)
+		t = escape_html(source.get_lines()[line-1])
+		if len(t) > 0 and t[-1] == "\n":
+			t = t[:-1]
+		source.get_colorizer().colorize(t, out)
 
 
 SPECIAL_VIEWS = {
@@ -567,12 +580,14 @@ class ViewDecorator(Decorator):
 		g = self.cfg
 		l = []
 		for view in self.views:
+			view.prepare(out)
+		for view in self.views:
 			c = view.get(g, v)
 			for i in range(0, len(c)):
 				l.append((c[i][0], view.level, i, view, c[i][1]))
 		for (a, v, i, v, c) in sorted(l):
 			v.gen(a, c, out)
-			out.write("<br/>")
+			out.write("<br align='left'/>")
 
 
 class SeqDecorator(Decorator):

@@ -385,6 +385,87 @@ class SourceManager:
 		return self.max.get_val(stat)
 
 
+
+###### Views ######
+
+class View:
+	"""Represents view of the program."""
+
+	def __init__(self, path, task):
+		self.path = path
+		self.task = task
+		self.name = os.path.basename(path)[:-9]
+		self.label = self.name
+		self.description = ""
+		self.data = None
+		self.csv = CSV(path)
+		self.csv.read_defs()
+		self.label = self.csv.consume("Label", self.label)
+		self.description = self.csv.consume("Description", "")
+		self.defs = self.csv.all_defs()
+		self.id = len(task.views)
+		self.level = self.id
+
+	def load_line(self, l):
+		assert len(l) > 3
+		self.data[int(l[0])][int(l[1])].append((l[2], l[3]))
+
+	def load_data(self):
+
+		# prepare the data structre
+		self.data = []
+		for g in self.task.cfgs:
+			self.data.append([[] for i in range(0, len(g.verts))])
+
+		# load the view
+		for l in self.csv.read_all():
+			self.load_line(l)
+
+	def ensure_data(self):
+		if self.data == None:
+			self.load_data()
+
+	def get(self, g, v):
+		"""Get the code corresponding to CFG g and vertex v.
+		The result is an ordered list of pairs (instruction address,
+		corresponding code)."""
+		if self.data == None:
+			self.load_data()
+		return self.data[g.id][v.id]
+
+	def gen(self, addr, code, out):
+		"""Output the code."""
+		if addr != None:
+			out.write("%08x&nbsp;" % addr)
+		out.write(code)
+
+
+class SourceView(View):
+	"""Special case of source view."""
+
+	def __init__(self, path, task):
+		View.__init__(self, path, task)
+		task.sview = self
+		self.level = -1
+
+	def load_line(self, l):
+		file, line = l[3].split(":")
+		self.data[int(l[0])][int(l[1])].append((l[2], (file, int(line))))
+		self.task.sman.find(file)
+
+	def get_sources(self):
+		return self.sources
+
+	def gen(self, addr, code, out):
+		file, line = code
+		out.write("%s:%d" % (file, line))
+
+
+SPECIAL_VIEWS = {
+	"source":	SourceView
+}
+
+
 ######## Lookup definitions #########
 
 class RGB:
@@ -438,62 +519,89 @@ class Decorator:
 	def bb_body(self, bb, out):
 		pass
 
-	def bb_attrs(self, bb, out):
-		pass
-
-	def bb_source(self, bb, out):
-		source = None
-		prev_file = None
-		prev_line = None
-		if bb.lines != []:
-			for (f, l) in bb.lines:
-				if f != prev_file:
-					source = self.sman.find(f)
-					prev_line = None
-				if source == None or f != prev_file or l-1 != prev_line:
-					out.write("<font color='blue'>%s:%d:</font><br align='left'/>" \
-						% (escape_html(f), l))
-				if source != None:
-					t = escape_html(source.get_lines()[l-1])
-					source.get_colorizer().colorize(t, out)
-					out.write("<br align='left'/>")
-				prev_file = f
-				prev_line = l
+	# def bb_source(self, bb, out):
+		# source = None
+		# prev_file = None
+		# prev_line = None
+		# if bb.lines != []:
+			# for (f, l) in bb.lines:
+				# if f != prev_file:
+					# source = self.sman.find(f)
+					# prev_line = None
+				# if source == None or f != prev_file or l-1 != prev_line:
+					# out.write("<font color='blue'>%s:%d:</font><br align='left'/>" \
+						# % (escape_html(f), l))
+				# if source != None:
+					# t = escape_html(source.get_lines()[l-1])
+					# source.get_colorizer().colorize(t, out)
+					# out.write("<br align='left'/>")
+				# prev_file = f
+				# prev_line = l
 
 	def bb_label(self, b, out):
 		pass
 
 
-class BaseDecorator(Decorator):
+class StatDecorator(Decorator):
 	
 	def __init__(self, task):
 		Decorator.__init__(self, task)
 		self.task = task
 	
-	def bb_label(self, bb, out):
+	def bb_body(self, bb, out):
 		for stat in self.task.stats:
 			val = bb.get_val(stat)
 			percent = val * 100. / self.task.sum.get_val(stat)
-			out.write("%s=%d (%3.2f%%)<br/>" % (stat.name, val, percent))
+			out.write("%s=%d (%3.2f%%)<br/>" % (stat.label, val, percent))
 
 
-class ColorDecorator(BaseDecorator):
+class ViewDecorator(Decorator):
 
-	def __init__(self, task, stat):
-		BaseDecorator.__init__(self, task)
-		self.stat = stat
+	def __init__(self, views):
+		self.views = views
 
-	def bb_attrs(self, bb, out):
-		if bb.type == BLOCK_CALL:
-			val = bb.callee.max.get_val(self.stat)
-		else:
-			val = bb.get_val(self.stat)
-		ratio = float(val) / self.task.get_max(self.stat)
-		if ratio != 0:
-			out.write(",fillcolor=\"%s\",style=\"filled\"" % background(ratio)) 
-			out.write(",fontcolor=\"%s\"" % foreground(ratio))
+	def start_cfg(self, cfg):
+		self.cfg = cfg
+
+	def bb_body(self, v, out):
+		g = self.cfg
+		l = []
+		for view in self.views:
+			c = view.get(g, v)
+			for i in range(0, len(c)):
+				l.append((c[i][0], view.level, i, view, c[i][1]))
+		for (a, v, i, v, c) in sorted(l):
+			v.gen(a, c, out)
+			out.write("<br/>")
 
 
+class SeqDecorator(Decorator):
+	"""Decorator composing sequence of decorators."""
+
+	def __init__(self, decs):
+		self.decs = decs
+
+	def start_cfg(self, cfg):
+		for dec in self.decs:
+			dec.start_cfg(cfg)
+
+	def end_cfg(self, cfg):
+		for dec in self.decs:
+			dec.end_cfg(cfg)
+
+	def cfg_label(self, cfg, out):
+		for dec in self.decs:
+			dec.cfg_label(cfg, out)
+
+	def bb_body(self, bb, out):
+		if bb.type == BLOCK_CODE and self.decs != []:
+			self.decs[0].bb_body(bb, out)
+			for dec in self.decs[1:]:
+				bb.gen_sep(dec, out)
+				dec.bb_body(bb, out)
+
+
+	
 ######## Program Descriptions ########
 
 BLOCK_ENTRY = 0
@@ -550,36 +658,45 @@ class Block(Data):
 		self.id = id
 		self.next = []
 		self.pred = []
-		self.lines = []
+		self.cfg = None
 	
 	def collect(self, id, val, addr, size, task):
 		return 0
 
-	def gen(self, decorator, out):
+	def gen(self, dec, out):
+		"""Called to generate DOT file."""
 		out.write("label=\"%s\"" % BLOCK_LABEL_MAP[self.type])
+
+	def gen_sep(self, dec, out):
+		"""Called by the decorator to generate separator
+		with different types of information."""
+		pass
 	
 
 class BasicBlock(Block):
 	
-	def __init__(self, id, base, size, lines = []):
+	def __init__(self, id, base, size):
 		Block.__init__(self, BLOCK_CODE, id)
 		self.base = base
 		self.size = size
-		self.lines = lines
 
 	def collect(self, id, val, addr, size, task):
 		if self.base <= addr and addr < self.base + self.size:
 			self.add_val(id, val)
-			for (f, l) in self.lines:
-				task.sman.collect(f, l, id, val)
+			if task.sview != None:
+				for (_, (f, l)) in task.sview.get(self.cfg, self):
+					task.sman.collect(f, l, id, val)
 
-	def gen(self, decorator, out):
+	def gen(self, dec, out):
 		num = self.id
 		out.write(
 			"margin=0,shape=\"box\",label=<<table border='0' cellpadding='8px'><tr><td>BB %s (%x:%s)</td></tr><hr/><tr><td align='left'>" \
 			% (num, self.base, self.size))
-		decorator.bb_label(self, out)
+		dec.bb_body(self, out)
 		out.write("</td></tr></table>>")
+
+	def gen_sep(self, dec, out):
+		out.write("</td></tr><hr/><tr><td>")
 
 
 class CallBlock(Block):
@@ -588,7 +705,7 @@ class CallBlock(Block):
 		Block.__init__(self, BLOCK_CALL, id)
 		self.callee = callee
 
-	def gen(self, decorator, out):
+	def gen(self, dec, out):
 		if self.callee != None:
 			out.write("URL=\"javascript:show_function(%d, '%s')\",label=\"call %s\",shape=\"box\"" \
 				% (self.callee.id, self.callee.label, self.callee.label))
@@ -621,6 +738,7 @@ class CFG:
 	
 	def add(self, block):
 		self.verts.append(block)
+		block.cfg = self
 
 	def begin_stat(self, id):
 		self.max.set_val(id, 0)
@@ -637,22 +755,20 @@ class CFG:
 			self.max.max_val(id, x)
 			self.sum.add_val(id, x)
 
-	def gen(self, out, decorator, with_source = False):
-		decorator.start_cfg(self)
-
+	def gen(self, dec, out):
+		"""Generate the DOT code for the CFG with the given decorator."""
+		dec.start_cfg(self)
 		out.write("digraph %s {\n" % self.id)
 		for b in self.verts:
 			out.write("\t%s [" % b.id)
-			b.gen(decorator, out)
-			decorator.bb_attrs(b, out)
+			b.gen(dec, out)
 			out.write("];\n")
 		for b in self.verts:
 			for e in b.next:
 				out.write("\t%s -> %s;\n" % (e.src.id, e.snk.id))
-
-		decorator.cfg_label(self, out)
+		dec.cfg_label(self, out)
 		out.write("\n}\n")
-		decorator.end_cfg(self)
+		dec.end_cfg(self)
 		
 
 class Task:
@@ -670,6 +786,7 @@ class Task:
 		self.sman = SourceManager([os.path.dirname("exec")])
 		self.read()
 		self.defs = None
+		self.views = []
 
 	def get_max(self, stat):
 		return self.max.get_val(stat)
@@ -1004,15 +1121,21 @@ def do_source_stat(comps, query):
 def do_function(comps, query):
 	g = TASK.cfgs[int(comps[0])]
 
-	# define decorator
+	# define statistics decorator
 	for s in TASK.stats:
 		s.ensure_load()
-	col = BaseDecorator(TASK)
+	sdec = StatDecorator(TASK)
+
+	# decorate with source
+	vdec = ViewDecorator([TASK.sview])
+
+	# put all together
+	dec = SeqDecorator([vdec, sdec])
 
 	# generate the dot
 	(handle, path)  = tempfile.mkstemp(suffix=".dot", text=True)
 	out = os.fdopen(handle, "w")
-	g.gen(out, with_source = True, decorator = col)
+	g.gen(dec, out)
 	out.close()
 
 	# generate the SVG
@@ -1186,6 +1309,18 @@ def main():
 		task_name = args.task
 	task_dir = os.path.join(exe_dir, exe_name + "-otawa", task_name )
 	TASK = Task(args.executable, task_name, task_dir)
+
+	# load views
+	for s in glob.glob(os.path.join(task_dir, "*-view.csv")):
+		try:
+			cls = SPECIAL_VIEWS[os.path.basename(s)[:-9]]
+		except KeyError:
+			cls = View
+		view = cls(s, TASK)
+	if TASK.sview != None:
+		TASK.sview.ensure_data()
+
+	# load statistics
 	for s in glob.glob(os.path.join(task_dir, "*-stat.csv")):
 		stat = Statistic(TASK, os.path.basename(s)[:-4], s)
 		stat.ensure_load()

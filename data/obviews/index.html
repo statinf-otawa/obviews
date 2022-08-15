@@ -8,6 +8,7 @@
         <script>
 			var HOST = "${host}";
 			var PORT = "${port}";
+			var VIEW_MASK = ${view-mask};
 			${stat-colors}
 		</script>
     </head>
@@ -51,6 +52,15 @@
 				<div id="main-bar">
 					<div id="main-name">
 					</div>
+
+					<div class="dropdown">
+						<button onclick="javascript:view_switch();">View</button>
+						<div id="view-menu" class="dropdown-content">
+						${views}
+						<button onclick="javascript:view_switch();">Done</button>
+						</div>
+					</div>
+					
 					<div class="toolbar">
 						<select id="stat" onchange="javascript:show_stat(this.selectedIndex, this.value);">
 							${stats}

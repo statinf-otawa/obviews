@@ -29,7 +29,9 @@ var MAIN = {
 	id: 		null,
 	name:		"",
 	stat:		0,
-	stat_name:	""
+	stat_name:	"",
+	vmask:		0,
+	ovmask:		0
 };
 
 
@@ -251,7 +253,7 @@ function show_function(num, name) {
 	MAIN.name = name;
 	display_in_code(`Loading function ${name}`);
 	ajaxGet(
-		`http://${HOST}:${PORT}/function/${num}?stat=${stat}`,
+		`http://${HOST}:${PORT}/function/${num}?vmask=${MAIN.vmask}`,
 		display_function
 	);
 }
@@ -292,6 +294,7 @@ function show_source(path) {
 
 /****** Menu management ******/
 
+
 function quit() {
 	window.close();
 }
@@ -313,3 +316,29 @@ function help() {
 	window.open("help.html", "obvious-help");
 }
 
+function view_change(e, n) {
+	if(e.checked)
+		MAIN.vmask |= 1 << n;
+	else
+		MAIN.vmask &= ~(1 << n);
+}
+
+function view_switch() {
+	var menu = document.getElementById("view-menu");
+	if(menu.style.display == "none")
+		menu.style.display = "block";
+	else {
+		menu.style.display = "none";
+		if(MAIN.vmask != MAIN.ovmask) {
+			MAIN.ovmask = MAIN.vmask;
+			//alert("view completed");
+			if(MAIN.mode == MODE_FUNCTION)
+				show_function(MAIN.id, MAIN.name);
+		}
+	}
+}
+
+
+/***** Initialization ******/
+MAIN.vmask = VIEW_MASK;
+MAIN.ovmask = VIEW_MASK;

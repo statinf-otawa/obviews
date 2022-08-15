@@ -1089,6 +1089,28 @@ def get_stat_colors():
 	out.write(");\n")
 	return out.to_str();
 
+def get_views():
+	out = StringBuffer()
+	for i in range(0, len(TASK.views)):
+		view = TASK.views[i]
+		out.write('<input name="view%d" %stype="checkbox" onchange="javascript:view_change(this, %d);"/><label for="view%d">%s</label><br/>\n'
+			% (
+				i,
+				"checked " if view == TASK.sview else "",
+				i,
+				i,
+				view.label
+			))
+	return out.to_str()
+
+
+def get_view_mask():
+	for i in range(0, len(TASK.views)):
+		view = TASK.views[i]
+		if view == TASK.sview:
+			return str(1 << i);
+	return "0";
+	
 
 INDEX_MAP = {
 	"functions":	get_functions,
@@ -1098,7 +1120,9 @@ INDEX_MAP = {
 	"application":	lambda: os.path.basename(os.path.splitext(TASK.exec)[0]),
 	"task":			lambda: TASK.name,
 	"host":			lambda: HOST,
-	"port":			lambda: str(PORT)
+	"port":			lambda: str(PORT),
+	"views":		get_views,
+	"view-mask":	get_view_mask
 }
 
 
@@ -1148,7 +1172,12 @@ def do_function(comps, query):
 
 	# decorate with source
 	#vdec = ViewDecorator([TASK.sview])
-	vdec = ViewDecorator(TASK.views)
+	vmask = int(query['vmask'])
+	views = []
+	for i in range(0, len(TASK.views)):
+		if (vmask & (1 << i)) != 0:
+			views.append(TASK.views[i])
+	vdec = ViewDecorator(views)
 
 	# put all together
 	dec = SeqDecorator([vdec, sdec])

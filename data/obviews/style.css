@@ -348,3 +348,14 @@ div.bottom {
 	text-align: center;
 }
 
+
+/* dropdown menu */
+.dropdown-content {
+	display: none;
+	position: absolute;
+	overflow: auto;
+	box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+	padding: 8px;
+	background-color: white;
+	z-index: 1000;
+}

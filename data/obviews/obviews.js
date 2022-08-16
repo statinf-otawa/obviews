@@ -31,7 +31,8 @@ var MAIN = {
 	stat:		0,
 	stat_name:	"",
 	vmask:		0,
-	ovmask:		0
+	ovmask:		0,
+	stack:		[]
 };
 
 
@@ -237,6 +238,7 @@ function display_function(answer) {
 	var name = document.getElementById("main-name");
 	name.innerHTML = MAIN.name;
 	MAIN.mode = MODE_FUNCTION;
+	enable_function();
 
 	cfg_reset(code.children[0]);
 	code.onmousedown = cfg_onmousedown;
@@ -278,6 +280,8 @@ function display_source(response) {
 	var name = document.getElementById("main-name");
 	name.innerHTML = MAIN.name;
 	MAIN.mode = MODE_SOURCE;
+	MAIN.stack = [];
+	disable_function();
 
 	if(MAIN.stat != 0)
 		show_stat(MAIN.stat, MAIN.stat_name);
@@ -294,6 +298,30 @@ function show_source(path) {
 
 /****** Menu management ******/
 
+function enable_function() {
+	var e = document.getElementById("view-button");
+	e.disabled = false;
+	e.children[0].style.opacity = 1.;		
+	console.log('stack length =' + MAIN.stack.length);
+	e = document.getElementById("back-button");
+	if(MAIN.stack.length == 0) {
+		e.disabled = true;
+		e.children[0].style.opacity = .25;
+	}
+	else {
+		e.disabled = false;
+		e.children[0].style.opacity = 1.;		
+	}
+}
+
+function disable_function() {
+	var e = document.getElementById("view-button");
+	e.disabled = true;
+	e.children[0].style.opacity = .25;		
+	e = document.getElementById("back-button");
+	e.disabled = true;		
+	e.children[0].style.opacity = .25;
+}
 
 function quit() {
 	window.close();
@@ -339,6 +367,25 @@ function view_switch() {
 }
 
 
+function open_function(idx, name) {
+	MAIN.stack = []
+	show_function(idx, name);
+}
+
+function call_function(idx, name) {
+	MAIN.stack.push({idx: MAIN.id, name: MAIN.name});
+	show_function(idx, name);
+}
+
+function return_function() {
+	if(MAIN.mode == MODE_FUNCTION && MAIN.stack.length >= 1) {
+		let l = MAIN.stack.pop();
+		show_function(l.idx, l.name);
+	}
+}
+
+
 /***** Initialization ******/
 MAIN.vmask = VIEW_MASK;
 MAIN.ovmask = VIEW_MASK;
+disable_function();

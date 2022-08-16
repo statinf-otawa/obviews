@@ -54,7 +54,11 @@
 					</div>
 
 					<div class="dropdown">
-						<button onclick="javascript:view_switch();">View</button>
+						<button onclick="javascript:view_switch();" id="view-button">
+							View
+							&nbsp;
+							<img src="dropdown.png" style="width: 1em;"/>
+						</button>
 						<div id="view-menu" class="dropdown-content">
 						${views}
 						<button onclick="javascript:view_switch();">Done</button>
@@ -66,6 +70,10 @@
 							${stats}
 						</select>
 					</div>
+
+					<button onclick="javascript: return_function();" id="back-button">
+						<img src="goback.png" style="width: 1em;"/>
+					</button>
 				</div>
 
 				<div id="code" class="code">

@@ -19,6 +19,8 @@
 # along with OTAWA; if not, write to the Free Software 
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
+# https://www.flaticon.com/
+
 from functools import partial
 import argparse
 import datetime
@@ -727,7 +729,7 @@ class CallBlock(Block):
 
 	def gen(self, dec, out):
 		if self.callee != None:
-			out.write("URL=\"javascript:show_function(%d, '%s')\",label=\"call %s\",shape=\"box\"" \
+			out.write("URL=\"javascript:call_function(%d, '%s')\",label=\"call %s\",shape=\"box\"" \
 				% (self.callee.id, self.callee.label, self.callee.label))
 		else:
 			out.write("label=\"call unknown\",shape=\"box\"")
@@ -1052,7 +1054,7 @@ def get_functions():
 	n = 0
 	for f in TASK.cfgs:
 		out.write(
-			'<div><a href="javascript:show_function(%s, \'%s\');">%s</a></div>' \
+			'<div><a href="javascript:open_function(%s, \'%s\');">%s</a></div>' \
 			% (n, f.label, f.label)
 		)
 		n = n + 1

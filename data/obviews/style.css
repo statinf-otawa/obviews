@@ -314,6 +314,7 @@ div.main {
 
 #main-name {
 	flex: 1;
+	vertical-align: middle; 
 }
 
 

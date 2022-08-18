@@ -747,9 +747,10 @@ class Edge(Data):
 
 class CFG:
 	
-	def __init__(self, id, label, ctx):
+	def __init__(self, id, label, addr, ctx):
 		self.id = id
 		self.label = label
+		self.addr = addr
 		self.ctx = ctx
 		self.verts = []
 		self.entry = None
@@ -761,6 +762,14 @@ class CFG:
 	def add(self, block):
 		self.verts.append(block)
 		block.cfg = self
+
+	def find_bb(self, addr):
+		"""Find the BB containing the address."""
+		for v in self.verts:
+			if v.type == BLOCK_CODE:
+				if v.base <= addr and addr < v.base + v.size:
+					return v
+		return None
 
 	def begin_stat(self, id):
 		self.max.set_val(id, 0)
@@ -824,6 +833,13 @@ class Task:
 
 	def find_source(self, name):
 		return self.sman.find(name)
+
+	def find_cfg(self, addr):
+		"""Find a CFG by its address."""
+		for g in self.cfgs:
+			if g.addr == addr:
+				return g
+		return None
 	
 	def add(self, cfg):
 		"""Add a a CFG to the task."""
@@ -849,7 +865,7 @@ class Task:
 			self.sum.add_val(id, g.sum.get_val(id))
 
 	def make_cfg(self, l):
-		g = CFG(len(self.cfgs), l[1], ' '.join(l[2:]))
+		g = CFG(len(self.cfgs), l[1], int(l[2], 16), l[3])
 		self.cfgs.append(g)
 
 	def make_entry(self, l):
@@ -1230,13 +1246,41 @@ def do_stat_info(comps, query):
 	out.write("</div>")
 	return 200, {}, out.to_xml()
 
+
+def do_context(comps, query):
+	out = StringBuffer()
+	g = TASK.cfgs[int(query["id"])]
+	cg = TASK.cfgs[0]
+	fst = True
+	for s in g.ctx[1:-1].split(','):
+		s = s.strip()
+		if s == "":
+			break;
+		if s.startswith("FUN("):
+			cg = TASK.find_cfg(int(s[4:-1], 16))
+			if cg != None:
+				s = cg.label
+		elif s.startswith("CALL("):
+			if cg != None:
+				bb = cg.find_bb(int(s[5:-1], 16))
+				if bb != None and TASK.sview != None:
+					l = TASK.sview.get(cg, bb)
+					if l != []:
+						s = "%s:%d" % (l[-1][1][0], l[-1][1][1])
+		out.write(s)
+		out.write('<img src="ctxsep.png" style="width: 1em;"/>')
+	out.write(g.label)			
+	return 200, {"content-Type": "text/plain"}, out.to_utf8()
+	
+	
 DO_MAP = {
 	"stop": 			do_stop,
 	"source":			do_source,
 	"source-stat":		do_source_stat,
 	"function":			do_function,
 	"function-stat":	do_function_stat,
-	"stat-info":		do_stat_info
+	"stat-info":		do_stat_info,
+	"context":			do_context
 }
 
 

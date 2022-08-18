@@ -224,6 +224,19 @@ function show_stat(stat, name) {
 
 /****** Function display ******/
 
+function display_context(answer) {
+	var name = document.getElementById("main-name");
+	name.innerHTML = answer;	
+}
+
+function show_context() {
+	ajaxGet(
+		`http://${HOST}:${PORT}/context?id=${MAIN.id}`,
+		display_context
+	);
+	
+}
+
 function clear_function_stat() {
 	var g = document.getElementById("graph0");
 	for(let c of g.getElementsByTagName("g"))
@@ -245,6 +258,8 @@ function display_function(answer) {
 	code.onmousemove = cfg_onmousemove;
 	code.onmouseup = cfg_onmouseup;
 	code.addEventListener("wheel", cfg_onwheel);
+
+	show_context();
 
 	if(MAIN.stat != 0)
 		show_stat(MAIN.stat, MAIN.stat_name);

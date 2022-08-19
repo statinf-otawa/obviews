@@ -115,15 +115,23 @@ function cfg_onmouseup(e) {
 	}
 }
 
+function cfg_zoom() {
+	CFG.scale = CFG.scale + CFG.step;
+	cfg_transform();
+}
+
+function cfg_unzoom() {
+	if(CFG.scale > CFG.step)
+		CFG.scale = CFG.scale - CFG.step;	
+	cfg_transform();
+}
+
 function cfg_onwheel(e) {
 	//console.log("wheel: " + e.timeStemp + ", " + e. deltaMode + ", " + e.wheelDelta);
-	if(e.wheelDelta > 0) {
-		if(CFG.scale > CFG.step)
-			CFG.scale = CFG.scale - CFG.step;
-	}
+	if(e.wheelDelta > 0)
+		cfg_unzoom();
 	else
-		CFG.scale = CFG.scale + CFG.step;
-	cfg_transform();
+		cfg_zoom();
 }
 
 function display_in_code(msg) {
@@ -327,6 +335,12 @@ function enable_function() {
 		e.disabled = false;
 		e.children[0].style.opacity = 1.;		
 	}
+	e = document.getElementById("zoom-button");
+	e.disabled = false;
+	e.children[0].style.opacity = 1.;		
+	e = document.getElementById("unzoom-button");
+	e.disabled = false;
+	e.children[0].style.opacity = 1.;		
 }
 
 function disable_function() {
@@ -335,6 +349,12 @@ function disable_function() {
 	e.children[0].style.opacity = .25;		
 	e = document.getElementById("back-button");
 	e.disabled = true;		
+	e.children[0].style.opacity = .25;
+	e = document.getElementById("zoom-button");
+	e.disabled = true;
+	e.children[0].style.opacity = .25;
+	e = document.getElementById("unzoom-button");
+	e.disabled = true;
 	e.children[0].style.opacity = .25;
 }
 

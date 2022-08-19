@@ -360,3 +360,23 @@ div.bottom {
 	background-color: white;
 	z-index: 1000;
 }
+
+
+/* classic links */
+a {
+	color: black;
+	background-color: none;
+	padding: 4px;
+	text-decoration: none;
+}
+
+a:hover {
+	color: white;
+	background-color: #8088C9;
+	border-radius: 4px;
+}
+
+
+.items div {
+	padding: 4px;
+}

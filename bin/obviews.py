@@ -1259,14 +1259,18 @@ def do_context(comps, query):
 		if s.startswith("FUN("):
 			cg = TASK.find_cfg(int(s[4:-1], 16))
 			if cg != None:
-				s = cg.label
+				s = """<a href="javascript: open_function(%d, '%s');">%s</a>""" \
+					% (cg.id, cg.label, cg.label)
 		elif s.startswith("CALL("):
 			if cg != None:
 				bb = cg.find_bb(int(s[5:-1], 16))
 				if bb != None and TASK.sview != None:
 					l = TASK.sview.get(cg, bb)
 					if l != []:
-						s = "%s:%d" % (l[-1][1][0], l[-1][1][1])
+						file = l[-1][1][0]
+						line = l[-1][1][1]
+						s = """<a href="javascript: show_source('%s');">%s:%d</a>""" \
+							% (file, file, line)
 		out.write(s)
 		out.write('<img src="ctxsep.png" style="width: 1em;"/>')
 	out.write(g.label)			

@@ -380,3 +380,28 @@ a:hover {
 .items div {
 	padding: 4px;
 }
+
+
+/* help, about */
+.doc {
+	text-align: center;
+}
+
+.doc p, h2, pre {
+	text-align: justify;
+	margin: 8px;
+	box-sizing: content-box;	
+}
+
+.doc pre {
+	text-align: left;
+}
+
+.doc a {
+	text-decoration: underline;
+}
+.doc a:hover {
+	color: #8088C9;
+	background-color: initial;
+	border: none;
+}

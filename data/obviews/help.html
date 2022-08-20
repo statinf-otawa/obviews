@@ -18,39 +18,40 @@
 			</div>
 		</div>
 
-        <section>
-            <p id="modedemploi">
-                Vous être en présence de l'outil Obviews.<br>
-                Ce module sert d'interface graphique à l'utilisation du logiciel de calcul du temps maximum <a href="http://www.tracesgroup.net/otawa/?page_id=10"> OTAWA</a>.
+        <section class="doc">
+			<p><b>Obviews</b> stands for <a href="http://www.otawa.fr">OTAWA</a>'s Binary Viewers
+			and is used to display to human user the result of <i>Worst Case Execution Time</i> calculation.
 
-                Utilisation :<br>
-                <br>
-                Sélectionner le répertoire de travail :<br>
-                Veuillez commencer par indiquer le chemin vers le répertoire de travail contenant le code source à analyser
-                en l'écrivant dans le champ prévu à cet effet. N'oubliez pas ensuite de cliquer sur le bouton pour valider.
-                Normalement, le chemin vers votre répertoire de travail dans la partie "infos" devrait s'actualiser.<br>
-                <br>
-                Sélectionner le type de coloration :<br>
-                Vous pouvez sélectionner grace à deux boutons si vous voulez afficher le code source ou les graphes en fonction
-                du temps "time" ou du nombre d'itérations de chaque bloc "count".<br>
-                <br>
-                Afficher le code source :<br>
-                Cliquez sur le bouton "voir code" pour afficher la liste des fichiers C.<br>
-                Cliquez ensuite sur l'un des liens pour afficher le code source du fichier C.<br>
-                <br>
-                Afficher les graphes CFG :<br>
-                Cliquez sur le bouton "voir graphe" pour afficher le graphe CFG dans un nouvel onglet.<br>
-                Vous pouvez déplacer le graphe en maintenant le curseur de la souris et en déplaçant ensuite le cursuer.<br>
-                Vous pouvez zoomer/dezoomer le graphe en plaçant le curseur de la souris au dessus du graphe et en faisant
-                tourner la roulette de la souris.<br>
-                Vous pouvez cliquez sur certaines parties du graphe pour accéder au sous-graphe correspondant et qui s'affichera
-                dans un nouvel onglet.<br>
-                Vous pouvez aussi directement cliquer sur un des liens en haut du graphe menant directement au graphe voulu sans
-                avoir à passer par tous les graphes intermédiaires.<br>
-                <br>
-                Déconnexion :<br>
-                Vous pouvez stoper le serveur en cliquant sur le bouton "déconnexion".<br>
-            </p>
+			<h2>Usage context</h2>
+			<p><b>Obviews</b> needs the output from different
+			<a href="http://www.otawa.fr">OTAWA</a>'s application. The
+			most used one is maybe <code>owcet</code>:</p>
+			<pre>
+			$ owcet -s HARDWARE EXEC TASK --stats
+			</pre>
+			<p><i>HARDWARE</i> selects the script to compute the WCET for
+			for the executable <i>EXEC</i> and the task <i>TASK</i>.
+			<i>TASK</i> is required to be a function name and, if omitted,
+			is the <code>main</code> itself.</p>
+
+			<p>The option <code>--stats</code> generates several files
+			in the directory <i>EXEC</i><code>otawa/</code><i>TASK</i>
+			the represents the program (in its different views) and statistics
+			collected from the computation of the WCET. These views and
+			statistics depends on the script <i>HARDWARE</i>.</p>
+
+			<p>then <b>obviews</b> can be launched this way:</p>
+			<pre>
+				$ obviews.py EXEC TASK
+			</pre>
+			<p><i>TASK</i> name is optional and taken to be <code>main</code>
+			if omitted. This will open a new window/tab in your preferred
+			browser where you explore the different statistics obtained
+			from WCET calculation.</p>
+				
+
+			<h2>Manual</h2>
+			
         </section>
         <script src="obviews.js"></script>
     </body>

@@ -19,38 +19,88 @@
 		</div>
 
         <section class="doc">
-			<p><b>Obviews</b> stands for <a href="http://www.otawa.fr">OTAWA</a>'s Binary Viewers
-			and is used to display to human user the result of <i>Worst Case Execution Time</i> calculation.
 
-			<h2>Usage context</h2>
-			<p><b>Obviews</b> needs the output from different
-			<a href="http://www.otawa.fr">OTAWA</a>'s application. The
-			most used one is maybe <code>owcet</code>:</p>
-			<pre>
-			$ owcet -s HARDWARE EXEC TASK --stats
-			</pre>
-			<p><i>HARDWARE</i> selects the script to compute the WCET for
-			for the executable <i>EXEC</i> and the task <i>TASK</i>.
-			<i>TASK</i> is required to be a function name and, if omitted,
-			is the <code>main</code> itself.</p>
+<p>
+<b>Obviews</b> (<i>OTAWA Binary Viewers</i>) allows to displays program representation and statistics produced by OTAWA tools.
+</p>
 
-			<p>The option <code>--stats</code> generates several files
-			in the directory <i>EXEC</i><code>otawa/</code><i>TASK</i>
-			the represents the program (in its different views) and statistics
-			collected from the computation of the WCET. These views and
-			statistics depends on the script <i>HARDWARE</i>.</p>
+<h2>How to run Obviews?</h2>
 
-			<p>then <b>obviews</b> can be launched this way:</p>
-			<pre>
-				$ obviews.py EXEC TASK
-			</pre>
-			<p><i>TASK</i> name is optional and taken to be <code>main</code>
-			if omitted. This will open a new window/tab in your preferred
-			browser where you explore the different statistics obtained
-			from WCET calculation.</p>
-				
+<p>
+The program representation (including CFG and source) can be produced with tool <code>dumpcfg</code>:
+</p>
 
-			<h2>Manual</h2>
+<pre>
+	$ dumpcfg -W <i>EXECUTABLE</i> [<i>FUNCTION</i>]
+</pre>
+
+<p>
+Arguments between <code>[</code>...<code>]</code> are optional. As default, the tool applis to function <code>main</code>.
+</p>
+
+<p>
+To get statistics and views about a WCET calculation, one has to pass the option <code>-W</code> and <code>--stats</code>:
+</p>
+
+<pre>
+	$ owcet -W --stats EXECUTABLE [FUNCTION]
+</pre>
+
+<p>
+This will result in a directory named <i>EXECUTABLE</i>/<i>FUNCTION</i> containing several <code>.csv</code> files. To get a display, run the command:
+</p>
+
+<pre>
+	$ <i>PATH</i>/bin/obviews.py <i>EXECUTABLE</i> <i>[FUNCTION]</i>
+</pre>
+
+<p>
+This opens an HTML page where the program representation and its statistics are displayed.
+</p>
+
+<p>
+For example, from the test directory, one can type:
+</p>
+<pre>
+	$ ..//bin/obviews.py bs.elf
+</pre>
+
+
+<h2> User interface quick guide</h2>
+
+<p>
+There are mainly 3 parts:
+</p>
+<ul>
+<li>Left pane contains the list of functions and of sources.</li>
+<li>Left-bottom pane displays specific information depending in the chose statistics.</li>
+<li>Main pane contains colored sources or CFGs depending on what is selected in the left pane.</li>
+</ul>
+
+<p>
+To navigate in the CFG,
+</p>
+<ul>
+<li>click and move to change the view point,</li>
+<li>mouse wheel or top-right buttons to zoom/unzoom,</li>
+<li>click on a call vertex to move to the CFG of the called function.</li>
+</ul>
+
+<p>
+In CFG mode, the program representation can be tuned by the `View` button:
+</p>
+<ol>
+<li>Select the required representations,</li>
+<li>And finally click on `Done`.</li>
+</ol>
+
+<p>
+To select a displayed statistics, click on the `statistic button`and the program representation (CFG or source) becomes colorized according to the intensity of the statistics (darker is stronger). In addition, in CFG mode, the statistics value is displayed in the vertices.
+</p>
+
+<p>
+Over the main pane, is displayed the current exposed source file name or function name. In case of CFG, it is also displayed the context of the function call: the list of functions and calls that leads to the displayed CFG and its statistics. The same function may have different statistics with different contexts. This context may be clicked to move to the corresponding CFG or function call. Back button on the right can be used to come back to caller CFG when the navigation has been performed by clicking on function call vertices.
+</p>
 			
         </section>
         <script src="obviews.js"></script>

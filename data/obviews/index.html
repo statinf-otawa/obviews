@@ -26,10 +26,42 @@
 			</div>
 		</div>
 
+		<div id="main-bar">
+			<div id="main-name">
+			</div>
+
+			<div class="dropdown">
+				<button onclick="javascript:view_switch();" id="view-button">
+					View
+					&nbsp;
+					<img src="dropdown.png" style="width: 1em;"/>
+				</button>
+				<div id="view-menu" class="dropdown-content">
+				${views}
+				<button onclick="javascript:view_switch();">Done</button>
+				</div>
+			</div>
+				
+			<div class="toolbar">
+				<select id="stat" onchange="javascript:show_stat(this.selectedIndex, this.value);">
+					${stats}
+				</select>
+			</div>
+
+			<button onclick="javascript: cfg_unzoom();" id="zoom-button">
+				<img src="zoom.png" style="width: 1em;"/>
+			</button>
+			<button onclick="javascript: cfg_zoom();" id="unzoom-button">
+				<img src="unzoom.png" style="width: 1em;"/>
+			</button>
+			<button onclick="javascript: return_function();" id="back-button">
+				<img src="goback.png" style="width: 1em;"/>
+			</button>
+		</div>
+
+
 		<div class="page">
-
 			<div class="left">
-
 				<div class="list code">
 					<div class="list-header">Functions</div>
 					<div id="function-list" class="items">
@@ -40,48 +72,12 @@
 						${sources}
 					</div>
 				</div>
-
 				<div id="infos" class="infos code">
 				</div>
-				
 			</div>
-			
+		
 
 			<div class="main">
-
-				<div id="main-bar">
-					<div id="main-name">
-					</div>
-
-					<div class="dropdown">
-						<button onclick="javascript:view_switch();" id="view-button">
-							View
-							&nbsp;
-							<img src="dropdown.png" style="width: 1em;"/>
-						</button>
-						<div id="view-menu" class="dropdown-content">
-						${views}
-						<button onclick="javascript:view_switch();">Done</button>
-						</div>
-					</div>
-					
-					<div class="toolbar">
-						<select id="stat" onchange="javascript:show_stat(this.selectedIndex, this.value);">
-							${stats}
-						</select>
-					</div>
-
-					<button onclick="javascript: cfg_unzoom();" id="zoom-button">
-						<img src="zoom.png" style="width: 1em;"/>
-					</button>
-					<button onclick="javascript: cfg_zoom();" id="unzoom-button">
-						<img src="unzoom.png" style="width: 1em;"/>
-					</button>
-					<button onclick="javascript: return_function();" id="back-button">
-						<img src="goback.png" style="width: 1em;"/>
-					</button>
-				</div>
-
 				<div id="code" class="code">
 					<div class="hint">
 						Nothing to display.

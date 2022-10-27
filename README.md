@@ -1,50 +1,56 @@
-# BE-affichage-statistique-otawa
-Projet du bureau d'étude affichage statistique potable par serveur HTTP+HTML/javascript Tlse UT3 2021
+# Obviews
 
-## Instalation
-
-> Python 3 est requis.
-
-> ⚠ [Otawa](http://www.tracesgroup.net/otawa/?page_id=419) doit être installé avant de passer à la suite.
-
-- Téléchargé le contenue du répertoire src de ce projet
-- Déplacer son contenue dans le répertoire bin du répertoire d'installation d'OTAWA.
-    + Si vous placer le contenue de src dans un autre répertoire, modifier dans le fichier `config.json` le champ `otawa-path` avec le chemin vers le répertoire d'installation d'OTAWA
-    + Pour générer le fichier de configuration, exécuté l'application avec le paramètre `--config` : `serv.py --config`. Le fichier `config.json` est généré avec des valeurs par défaut. ⚠ si le fichier `config.json` existe déjà, il sera remplacer.
-
-## Exécution
-
-- Lancer un invite de commande.
-- Placer vous dans le répertoire avec l'exécutable à analyser.
-- Lancer le fichier serv.py que vous avez extrait de `src`
-- Un navigateur se lance avec l'application Obviews dedans.
-
-## Paramètre de serv.py
+**Obviews** (*OTAWA Binary Viewers) allows to displays program representation and statistics produced by OTAWA tools.
 
 
-| Paramètre           | Description                                                  |
-| ------------------- | ------------------------------------------------------------ |
-| --config            | Génère un fichier de configuration par default. Attention si le fichier config.json existe déjà, il sera remplacé. |
-| -p/--port NUM       | Numéro de port (NUM) pour ce connecter à l'affichage à partir du navigateur |
-| -w/--work-dir PATH  | Chemin du répertoire à analyser                              |
-| -o/--otawa-dir PATH | Chemin de l'installation d'Otawa                             |
 
-## List Commande
-| Commande                                           | Paramètre                          | Sortie | Description                                                  | Exemple                                                      |
-| -------------------------------------------------- | ---------------------------------- | ------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
-| http://127.0.0.1:8000/                             |                                    | html   | Page d'accueil de l'application                              | http://127.0.0.1:8000/                                       |
-| http://127.0.0.1:8000/resources/{fileName}         |                                    |        | Retourne le fichier demandé du répertoire `resources`.       | http://127.0.0.1:8000/resources/index.html                   |
-| http://127.0.0.1:8000/stats/code/{$fichier_source} | colored_by                         | html   | Retourne un html du code source indiqué par `$fichier_source` avec les stats du nombre de passages et du temps passé par instruction. Avec le paramètre color_by, on peut indiquer si on veut que les lignes de code soit colorié selon le nombre de passages (`count`, valeur par défaut) ou le temps passé (`time`). | http://127.0.0.1:8000/stats/code/bs.c                        |
-| http://127.0.0.1:8000/stats/list_cfgs              |                                    | json   | Retourne la liste des nom des cfg associé à leur identifiant | http://127.0.0.1:8000/stats/list_cfgs                        |
-| http://127.0.0.1:8000/stats/cfg/{$id_cfg}          | colored_by                         | .dot   | Retourne le cfg en fichier `.dot` de {$id_cfg} correspondant à une fonction. Si non  indiqué, renvoi celui du `main`. Avec le paramètre color_by, on peut indiquer si on veut que le cfg soit colorié selon le nombre de passages (`count`, valeur par défaut) ou le temps passé (`time`). | http://127.0.0.1:8000/stats/cfg/_0 http://127.0.0.1:8000/stats/cfg/_1 |
-| http://127.0.0.1:8000/set                          | otawa-dir work-dir save_config     |        | Permet de paramétré des valeur du serveur. Les paramètre peuvent être envoyé simultanément en les séparant par un `&`. `otawa-dir` indique le chemin d'installation et `work-dir` indique ou est l'espace de travail du serveur, c'est à dire ou sont enregistrées puis les stats sont lue. Si le paramètre `save_config=True` est envoyé, les paramètre envoyé qui peuvent être stocké dans le fichier de configuration seront enregistré dedans et pourront être réutilisé par le serveur au prochain redémarrage également. | http://127.0.0.1:8000/set?otawa-dir=/home/dd/OTAWA  http://127.0.0.1:8000/set?otawa-dir=/home/dd/OTAWA&work-dir=/home/dd/work&svae_config |
-| http://127.0.0.1:8000/get                          | otawa-dir work-dir                 | json   | Retourne les valeurs des paramètres demandé                  | http://127.0.0.1:8000/get?otawa-dir http://127.0.0.1:8000/get?work-dir http://127.0.0.1:8000/get?otawa-dir&work-dir |
-| http://127.0.0.1:8000/wcet/list_scripts            |                                    | json   | Retourne la liste des scripts pouvant être exécuté par wcet  | http://127.0.0.1:8000/wcet/list_scripts                      |
-| http://127.0.0.1:8000/wcet/run                     | executable flowfacts script target |        | Lance l'analyse par wcet de l'exécutable indiqué par le champs obligatoire `executable` avec la possibilité d'indiqué le fichier `flowfacts` associé. Possibilité de choisir avec quel `script` sera analysé le programme parmi ceux renvoyé par http://127.0.0.1:8000/wcet/list_scripts et avec la possibilité de choisir la fonction de départ (default : main). | http://127.0.0.1:8000/wcet/run?executable=/home/labwork1/bs/bs.elf&script=lpc2138&flowfacts=/home/labwork1/bs/bs.ff |
-| http://127.0.0.1:8000/stop                         |                                    |        | Arrête le serveur                                            | http://127.0.0.1:8000/stop                                   |
+## How to run Obviews?
 
-## Contributeur
-- Hermès Desgrez Dautet
-- Jean-Baptiste Ragues
-- Sylvain Roelants
-- Hugues Cassé
+The program representation (including CFG and source) can be produced with tool **dumpcfg**:
+```
+	$ dumpcfg -W EXECUTABLE [FUNCTION]
+```
+Arguments between `[`...`]` are optional. As default, the tool applis to function `main`.
+
+
+To get statistics and views about a WCET calculation, one has to pass the option `-W' and '--stats`:
+
+```
+	$ owcet -W --stats EXECUTABLE [FUNCTION]
+```
+
+This will result in a directory named `EXECUTABLE/FUNCTION` containing several `.csv`files. To get a display, run the command:
+```
+	$ PATH/bin/obviews.py EXECUTABLE [FUNCTION]
+```
+
+This opens an HTML page where the program representation and its statistics are displayed.
+
+For example, from the test directory, one can type:
+```
+	$ ..//bin/obviews.py bs.elf
+```
+
+
+# User interface quick guide
+
+There are mainly 3 parts:
+* Left pane contains the list of functions and of sources.
+* Left-bottom pane displays specific information depending in the chose statistics.
+* Main pane contains colored sources or CFGs depending on what is selected in the left pane.
+
+To navigate in the CFG,
+* click and move to change the view point,
+* mouse wheel or top-right buttons to zoom/unzoom,
+* click on a call vertex to move to the CFG of the called function.
+
+In CFG mode, the program representation can be tuned by the `View` button:
+1. Select the required representations,
+2. And finally click on `Done`.
+
+To select a displayed statistics, click on the `statistic button`and the program representation (CFG or source) becomes colorized according to the intensity of the statistics (darker is stronger). In addition, in CFG mode, the statistics value is displayed in the vertices.
+
+Over the main pane, is displayed the current exposed source file name or function name. In case of CFG, it is also displayed the context of the function call: the list of functions and calls that leads to the displayed CFG and its statistics. The same function may have different statistics with different contexts. This context may be clicked to move to the corresponding CFG or function call. Back button on the right can be used to come back to caller CFG when the navigation has been performed by clicking on function call vertices.
+
+
+

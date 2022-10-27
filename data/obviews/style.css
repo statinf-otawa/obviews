@@ -310,11 +310,13 @@ div.main {
 #main-bar {
 	display: flex;
 	padding: 4px;
+	padding-left: 8px;
+	padding-right: 8px;
 }
 
 #main-name {
 	flex: 1;
-	vertical-align: middle; 
+	vertical-align: middle;
 }
 
 
@@ -385,6 +387,13 @@ a:hover {
 /* help, about */
 .doc {
 	text-align: center;
+	margin-top: 1em;
+	margin-bottom: 1em;
+	padding: 1em;
+}
+
+.doc h2 {
+	margin-top: 2em;
 }
 
 .doc p, h2, pre {
@@ -404,4 +413,7 @@ a:hover {
 	color: #8088C9;
 	background-color: initial;
 	border: none;
+}
+.doc ul, ol {
+	text-align: left;
 }

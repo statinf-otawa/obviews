@@ -34,6 +34,7 @@ var MAIN = {
 	ovmask:		0,
 	stack:		[]
 };
+var HOST = window.location.host;
 
 
 /****** Convenient functions ******/
@@ -195,7 +196,7 @@ function display_stat(answer) {
 	// display info if required
 	if(MAIN.stat != 0)
 		ajaxGet(
-			`http://${HOST}:${PORT}/stat-info?stat=${MAIN.stat}`,
+			`http://${HOST}/stat-info?stat=${MAIN.stat}`,
 			display_info);
 }
 
@@ -222,7 +223,7 @@ function show_stat(stat, name) {
 	
 	// issue command if required
 	if(cmd != null) {
-		url  = new URL(`http://${HOST}:${PORT}/${cmd}`);
+		url  = new URL(`http://${HOST}/${cmd}`);
 		url.searchParams.append("stat", stat);
 		url.searchParams.append("id", MAIN.id);
 		ajaxGet(url, display_stat);
@@ -239,7 +240,7 @@ function display_context(answer) {
 
 function show_context() {
 	ajaxGet(
-		`http://${HOST}:${PORT}/context?id=${MAIN.id}`,
+		`http://${HOST}/context?id=${MAIN.id}`,
 		display_context
 	);
 	
@@ -278,7 +279,7 @@ function show_function(num, name) {
 	MAIN.name = name;
 	display_in_code(`Loading function ${name}`);
 	ajaxGet(
-		`http://${HOST}:${PORT}/function/${num}?vmask=${MAIN.vmask}`,
+		`http://${HOST}/function/${num}?vmask=${MAIN.vmask}`,
 		display_function
 	);
 }
@@ -314,7 +315,7 @@ function show_source(path) {
 	display_in_code(`Loading ${path}.`);
 	MAIN.id = path;
 	MAIN.name = path;
-	let url = `http://${HOST}:${PORT}/source/${path}`;
+	let url = `http://${HOST}/source/${path}`;
 	ajaxGet(url, display_source);
 }
 
@@ -363,7 +364,7 @@ function quit() {
 }
 
 function logOut(){
-  let url = `http://${HOST}:${PORT}/stop`;
+  let url = `http://${HOST}/stop`;
   ajaxGet(url, quit);
 }
 

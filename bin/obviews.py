@@ -49,8 +49,6 @@ from threading import Thread
 ######### global state #########
 VERBOSE = False
 DEBUG = False
-HOST = '127.0.0.1'
-PORT = 8000
 DATA_DIR = None
 DOT_PATH = None
 TASK = None
@@ -445,6 +443,7 @@ class View:
 		if addr != None:
 			out.write("%08x&nbsp;" % addr)
 		out.write(escape_html(code))
+		out.write("<br align='left'/>")
 
 
 class SourceView(View):
@@ -469,16 +468,17 @@ class SourceView(View):
 
 	def gen(self, addr, code, out):
 		file, line = code
-		if self.file != file or self.line +1 != line: 
+		source = self.task.find_source(file)
+		if source == None or self.file != file or self.line + 1 != line: 
 			out.write("<b><font color='blue'>%s:%d:</font></b><br align='left'/>" \
 				% (escape_html(file), line))
 		self.file = file
 		self.line = line
-		source = self.task.find_source(file)
-		t = escape_html(source.get_lines()[line-1])
-		if len(t) > 0 and t[-1] == "\n":
-			t = t[:-1]
-		source.get_colorizer().colorize(t, out)
+		if source != None:
+			t = escape_html(source.get_lines()[line-1])
+			if len(t) > 0 and t[-1] == "\n":
+				t = t[:-1]
+			source.get_colorizer().colorize(t, out)
 
 
 SPECIAL_VIEWS = {
@@ -539,25 +539,6 @@ class Decorator:
 	def bb_body(self, bb, out):
 		pass
 
-	# def bb_source(self, bb, out):
-		# source = None
-		# prev_file = None
-		# prev_line = None
-		# if bb.lines != []:
-			# for (f, l) in bb.lines:
-				# if f != prev_file:
-					# source = self.sman.find(f)
-					# prev_line = None
-				# if source == None or f != prev_file or l-1 != prev_line:
-					# out.write("<font color='blue'>%s:%d:</font><br align='left'/>" \
-						# % (escape_html(f), l))
-				# if source != None:
-					# t = escape_html(source.get_lines()[l-1])
-					# source.get_colorizer().colorize(t, out)
-					# out.write("<br align='left'/>")
-				# prev_file = f
-				# prev_line = l
-
 	def bb_label(self, b, out):
 		pass
 
@@ -594,7 +575,7 @@ class ViewDecorator(Decorator):
 				l.append((c[i][0], view.level, i, view, c[i][1]))
 		for (a, v, i, v, c) in sorted(l):
 			v.gen(a, c, out)
-			out.write("<br align='left'/>")
+			#out.write("<br align='left'/>")
 
 
 class SeqDecorator(Decorator):
@@ -895,8 +876,13 @@ class Task:
 		g.add(b)
 
 	def make_call(self, l):
+		#print("DEBUG:", l)
 		g = self.cfgs[-1]
-		b = CallBlock(len(g.verts), int(l[1]))
+		if len(l) < 2:
+			callee = None
+		else:
+			callee = int(l[1])
+		b = CallBlock(len(g.verts), callee)
 		g.add(b)
 
 	def make_edge(self, l):
@@ -919,13 +905,15 @@ class Task:
 			# parse definitions
 			csv = CSV(path)
 			for l in csv.read_all():
+				print("DEBUG:", l)
 				map[l[0]](l)
 
 			# fix call blocks
 			for g in self.cfgs:
 				for v in g.verts:
 					if v.type == BLOCK_CALL:
-						v.callee = self.cfgs[v.callee]
+						if v.callee != None:
+							v.callee = self.cfgs[v.callee]
 
 			# record defs
 			self.label = csv.consume("Label", self.name)
@@ -1137,8 +1125,6 @@ INDEX_MAP = {
 	"stat-colors":	get_stat_colors,
 	"application":	lambda: os.path.basename(os.path.splitext(TASK.exec)[0]),
 	"task":			lambda: TASK.name,
-	"host":			lambda: HOST,
-	"port":			lambda: str(PORT),
 	"views":		get_views,
 	"view-mask":	get_view_mask
 }
@@ -1355,20 +1341,39 @@ class Handler(BaseHTTPRequestHandler):
 
 ######### Start-up #########
 
-def open_browser(port):
+BROWSERS = [
+	("chromium", "chromium --app=%s --new-window"),
+	("google-chrome", "chromium --app=%s --new-window")
+]
+
+def open_browser(port, debug = False):
 	"""Open the connection into a browser."""
 	time.sleep(.5)
-	webbrowser.open("http://localhost:%d" % port)
+	addr = "http://localhost:%d" % port
+
+	# debug mode
+	if debug:
+		webbrowser.open(addr)
+		return
+
+	# look for available browser
+	for (browser, cmd) in BROWSERS:
+		if shutil.which(browser) != None:
+			subprocess.run(cmd % addr, shell=True)
+			return
+
+	# use the default browser
+	webbrowser.open("http://localhost:%d" % port, new=1)
+
 
 def main():
 	global APPLICATION
 	global DATA_DIR
 	global DOT_PATH
-	global HOST
-	global PORT
 	global SOURCE_MANAGER
 	global STATS
 	global TASK
+	global DEBUG
 
 	# check for dot
 	DOT_PATH = shutil.which("dot")
@@ -1381,11 +1386,18 @@ def main():
 		help="Select the exacutable to get statistics from.")
 	parser.add_argument('task', nargs="?", type=str,
 		help="Select which task to display (default main function).")
-	parser.add_argument('-p', '--port', type=int,
-		help="Port for the browser to display these pages.")
+	parser.add_argument("--debug", action="store_true",
+		help="Enable debugging mode.")
+	parser.add_argument("--serve", action="store_true",
+		help="Work as a server.")
 	args = parser.parse_args()
-	if args.port is not None:
-		PORT = args.port
+	if args.debug:
+		DEBUG = True
+		print("INFO: debug mode enabled.")
+	serve = False
+	if args.serve:
+		serve = True
+		print("INFO: server mode enabled.")
 
 	# find resources
 	otawa_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -1426,9 +1438,16 @@ def main():
 		stat.ensure_load()
 
 	# start browser and server
-	Thread(target=partial(open_browser, PORT)).start()
-	with HTTPServer((HOST, PORT), Handler) as server:
+	with HTTPServer(("localhost", 0), Handler) as server:
+		port = server.server_address[1]
+		if DEBUG or serve:
+			print("INFO: listening to http://localhost:%d" % port)
+		if not serve:
+			Thread(target=partial(open_browser, port, DEBUG)).start()
 		server.serve_forever()
 
 if __name__ == "__main__":
-	main()
+	try:
+		main()
+	except KeyboardInterrupt:
+		exit(0)

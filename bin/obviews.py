@@ -905,7 +905,6 @@ class Task:
 			# parse definitions
 			csv = CSV(path)
 			for l in csv.read_all():
-				print("DEBUG:", l)
 				map[l[0]](l)
 
 			# fix call blocks

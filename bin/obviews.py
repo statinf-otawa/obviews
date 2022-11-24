@@ -176,6 +176,7 @@ class SyntaxColorizer:
 	
 	def colorize(self, line, out):
 		out.write(line)
+		out.write("<br align='left'/>")
 
 NULL_COLORIZER = SyntaxColorizer()
 
@@ -196,7 +197,7 @@ class CColorizer:
 			m = self.re.search(line)
 			if not m:
 				out.write(line)
-				return
+				break
 			out.write(line[:m.start()])
 			if m.group(1):
 				out.write("<font color='orange'><b>%s</b></font>" % m.group(1))
@@ -209,6 +210,7 @@ class CColorizer:
 			else:
 				out.write(m.group())
 			line = line[m.end():]
+		out.write("<br align='left'/>")
 
 SYNTAX_COLS = { ext: CColorizer \
 	for ext in ['.c', '.h', '.cpp', '.hpp', '.cc', '.hh'] }

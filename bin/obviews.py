@@ -716,7 +716,7 @@ class CallBlock(Block):
 				% (self.callee.id, self.callee.label, self.callee.label))
 		else:
 			out.write("label=\"call unknown\",shape=\"box\"")
-
+	
 
 class Edge(Data):
 	
@@ -863,9 +863,9 @@ class Task:
 		g.exit = b
 		g.add(b)
 
-	def make_uknown(self, l):
+	def make_unknown(self, l):
 		g = self.cfgs[-1]
-		b = Block(BLOCK_uNKNOWN, len(g.verts))
+		b = Block(BLOCK_UNKNOWN, len(g.verts))
 		g.unknown = b
 		g.add(b)
 
@@ -900,7 +900,8 @@ class Task:
 			'X': self.make_exit,
 			'B': self.make_bb,
 			'C': self.make_call,
-			'E': self.make_edge
+			'E': self.make_edge,
+			'U': self.make_unknown
 		}
 		try:
 

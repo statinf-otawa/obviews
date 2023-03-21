@@ -1361,8 +1361,9 @@ def open_browser(port, debug = False):
 	# look for available browser
 	for (browser, cmd) in BROWSERS:
 		if shutil.which(browser) != None:
-			subprocess.run(cmd % addr, shell=True)
-			return
+			res = subprocess.run(cmd % addr, shell=True)
+			if res.returncode == 0:
+				return
 
 	# use the default browser
 	webbrowser.open("http://localhost:%d" % port, new=1)

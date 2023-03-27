@@ -1071,7 +1071,7 @@ def get_sources():
 	"""Generate HTML to access the sources of the current task."""
 	out = StringBuffer()
 	srcs = list(TASK.get_sources())
-	srcs.sort()
+	srcs.sort(key = lambda s: s.name)
 	for src in srcs:
 		out.write("""<div><a href="javascript:show_source('%s')">%s</a></div>""" \
 			% (src.name, src.name))

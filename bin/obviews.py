@@ -56,6 +56,18 @@ TASK = None
 
 ######### Convenient functions #########
 
+PARAM_RE = re.compile("%([0-9a-fA-F]{2})")
+def parsep(text):
+	res = ""
+	m = PARAM_RE.search(text)
+	while m:
+		res += text[:m.start()]
+		res += chr(int(m[1], 16))
+		text = text[m.end():]
+		m = PARAM_RE.search(text)
+	res += text
+	return res
+
 def error(msg):
 	sys.stderr.write("ERROR: %s\n" % msg)
 
@@ -878,7 +890,6 @@ class Task:
 		g.add(b)
 
 	def make_call(self, l):
-		#print("DEBUG:", l)
 		g = self.cfgs[-1]
 		if len(l) < 2:
 			callee = None
@@ -1158,7 +1169,9 @@ def do_source(comps, query = {}):
 def do_source_stat(comps, query):
 	stat = TASK.stats[int(query["stat"]) - 1]
 	stat.ensure_load()
-	source = TASK.find_source(query["id"])
+	path = parsep(query["id"])
+	source = TASK.find_source(path)
+	assert source != None
 	out = StringBuffer();
 	out.write("0 %d" % TASK.get_source_manager().get_max(stat))
 	for i in range(0, len(source.get_lines())):

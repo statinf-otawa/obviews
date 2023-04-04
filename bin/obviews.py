@@ -75,8 +75,7 @@ def warn(msg):
 	sys.stderr.write("WARNING: %s\n" % msg)
 
 def fatal(msg):
-	error(msg)
-	exit(1)
+	raise FatalError(msg)
 
 def norm(name):
 	return name.replace("-", "_")
@@ -100,6 +99,16 @@ class StringBuffer():
 
 	def to_xml(self):
 		return ('<?xml version="1.0" encoding="utf8" standalone="yes"?>\n' + self.str).encode("utf-8")
+
+
+class FatalError(Exception):
+	"""Fatal exception in obviews."""
+
+	def __init__(self, msg):
+		self.msg = msg
+
+	def __str__(self):
+		return self.msg
 
 
 def escape_dot(s):
@@ -809,7 +818,7 @@ class Task:
 		self.max = Data()
 		self.sum = Data()
 		self.stats = []
-		self.sman = SourceManager([os.path.dirname("exec")])
+		self.sman = SourceManager([os.path.dirname(exec)])
 		self.read()
 		self.defs = None
 		self.views = []
@@ -905,6 +914,8 @@ class Task:
 	def read(self):
 		"""Read the task from the file."""
 		path = os.path.join(self.path, "cfg.csv")
+		if not os.path.exists(path):
+			fatal("no CFG file. Did you forget -W option in objdump/owcet?")
 		map = {
 			'G': self.make_cfg,
 			'N': self.make_entry,
@@ -1309,9 +1320,12 @@ class Handler(BaseHTTPRequestHandler):
 					preprocess(path, INDEX_MAP)
 			else:
 				r = mimetypes.guess_type(path)
-				return 200, \
-					{"Content-Type": r[0]}, \
-					open(path, 'rb').read()
+				try:
+					return 200, \
+						{"Content-Type": r[0]}, \
+						open(path, 'rb').read()
+				except FileNotFoundError:
+					return 404, None, ""
 
 	def do_GET(self):
 	
@@ -1352,6 +1366,12 @@ class Handler(BaseHTTPRequestHandler):
 			sys.exit(0)
 
 	do_POST = do_GET
+
+	def log_error(self, fmt, *args):
+		http.server.BaseHTTPRequestHandler.log_message(self, fmt % args)
+
+	def log_message(self, fmt, *args):
+		pass
 
 
 ######### Start-up #########
@@ -1436,6 +1456,8 @@ def main():
 	else:
 		task_name = args.task
 	task_dir = os.path.join(exe_dir, exe_name + "-otawa", task_name )
+	if not os.path.exists(task_dir):
+		fatal("no statistics for %s task %s. Did you forget --stats option in owcet?" % (args.executable, task_name))
 	TASK = Task(args.executable, task_name, task_dir)
 
 	# load views
@@ -1467,3 +1489,5 @@ if __name__ == "__main__":
 		main()
 	except KeyboardInterrupt:
 		exit(0)
+	except FatalError as e:
+		sys.stderr.write("ERROR: %s\n" % e)

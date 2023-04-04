@@ -83,7 +83,7 @@ function cfg_reset(cont) {
 
 function cfg_transform() {
 	var t =
-		`scale(${CFG.scale}, ${CFG.scale}) translate(${CFG.pos.x}px, ${CFG.pos.y}px)`;
+		` translate(${CFG.pos.x}px, ${CFG.pos.y}px) scale(${CFG.scale}, ${CFG.scale})`;
 	CFG.cont.style.transform = t;
 }
 
@@ -257,19 +257,29 @@ function display_function(answer) {
 	var code = document.getElementById("code");
 	code.style.overflow = "clip";
 	code.innerHTML = answer;
+	var crect = code.getBoundingClientRect();
+	var srect = code.children[0].getBoundingClientRect();
+	
 	var name = document.getElementById("main-name");
 	name.innerHTML = MAIN.name;
 	MAIN.mode = MODE_FUNCTION;
 	enable_function();
 
 	cfg_reset(code.children[0]);
+	if(crect.width < srect.width) {
+		CFG.scale = crect.width / srect.width;
+		CFG.pos.x = -(srect.width - crect.width) / 2;
+		CFG.pos.y = -(srect.height - srect.height * CFG.scale) / 2
+	}
+	else
+		CFG.pos.x = -(srect.width - crect.width) / 2 / CFG.scale;
+	cfg_transform();
 	code.onmousedown = cfg_onmousedown;
 	code.onmousemove = cfg_onmousemove;
 	code.onmouseup = cfg_onmouseup;
 	code.addEventListener("wheel", cfg_onwheel);
 
 	show_context();
-
 	if(MAIN.stat != 0)
 		show_stat(MAIN.stat, MAIN.stat_name);
 }

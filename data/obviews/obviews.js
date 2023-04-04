@@ -32,7 +32,8 @@ var MAIN = {
 	stat_name:	"",
 	vmask:		0,
 	ovmask:		0,
-	stack:		[]
+	stack:		[],
+	code: 		null
 };
 var HOST = window.location.host;
 
@@ -62,28 +63,32 @@ function clear_display(id){
 
 /****** Main utilities ******/
 
-var CFG = {
-	scale: 		1.,
-	step: 		.1,
-	panning: 	false,
-	pos:		{ x: 0, y: 0 },
-	prev:		{ x: 0, y: 0 },
-	cont:		null
-};
+function make_CFG(cont) {
+	return {
+		scale: 		1.,
+		step: 		.1,
+		panning: 	false,
+		pos:		{ x: 0, y: 0 },
+		prev:		{ x: 0, y: 0 },
+		cont:		cont
+	};
+}
 
-function cfg_reset(cont) {
+var CFG = null;
+var CFG_MAP = new Map();
+
+/*function cfg_reset(cont) {
 	CFG.scale = 1.;
 	CFG.panning = false;
 	CFG.pos.x = 0;
 	CFG.pos.y = 0;
 	CFG.prev.x = 0;
 	CFG.prev.y = 0;
-	CFG.cont = cont;
-}
+}*/
 
 function cfg_transform() {
 	var t =
-		` translate(${CFG.pos.x}px, ${CFG.pos.y}px) scale(${CFG.scale}, ${CFG.scale})`;
+		`translate(${CFG.pos.x}px, ${CFG.pos.y}px) scale(${CFG.scale}, ${CFG.scale})`;
 	CFG.cont.style.transform = t;
 }
 
@@ -238,7 +243,7 @@ function show_stat(stat, name) {
 
 function display_context(answer) {
 	var name = document.getElementById("main-name");
-	name.innerHTML = answer;	
+	name.innerHTML = answer;
 }
 
 function show_context() {
@@ -257,31 +262,43 @@ function clear_function_stat() {
 }
 
 function display_function(answer) {
+	
+	// setup elements
 	var code = document.getElementById("code");
 	code.style.overflow = "clip";
 	code.innerHTML = answer;
 	var crect = code.getBoundingClientRect();
 	var srect = code.children[0].getBoundingClientRect();
-	
 	var name = document.getElementById("main-name");
 	name.innerHTML = MAIN.name;
 	MAIN.mode = MODE_FUNCTION;
 	enable_function();
 
-	cfg_reset(code.children[0]);
-	if(crect.width < srect.width) {
-		CFG.scale = crect.width / srect.width;
-		CFG.pos.x = -(srect.width - crect.width) / 2;
-		CFG.pos.y = -(srect.height - srect.height * CFG.scale) / 2
+	// set the configuration
+	if(CFG_MAP.has(MAIN.id)) {
+		CFG = CFG_MAP.get(MAIN.id);
+		CFG.cont = code.children[0];
 	}
-	else
-		CFG.pos.x = -(srect.width - crect.width) / 2 / CFG.scale;
+	else {
+		CFG = make_CFG(code.children[0]);
+		CFG_MAP.set(MAIN.id, CFG);
+		if(crect.width < srect.width) {
+			CFG.scale = crect.width / srect.width;
+			CFG.pos.x = -(srect.width - crect.width) / 2;
+			CFG.pos.y = -(srect.height - srect.height * CFG.scale) / 2
+		}
+		else
+			CFG.pos.x = -(srect.width - crect.width) / 2 / CFG.scale;
+	}
 	cfg_transform();
+
+	// update events
 	code.onmousedown = cfg_onmousedown;
 	code.onmousemove = cfg_onmousemove;
 	code.onmouseup = cfg_onmouseup;
 	code.addEventListener("wheel", cfg_onwheel);
 
+	// update context and stats
 	show_context();
 	if(MAIN.stat != 0)
 		show_stat(MAIN.stat, MAIN.stat_name);
@@ -289,7 +306,7 @@ function display_function(answer) {
 
 function show_function(num, name) {
 	MAIN.id = num;
-	MAIN.name = name;
+ 	MAIN.name = name;
 	display_in_code(`Loading function ${name}`);
 	ajaxGet(
 		`http://${HOST}/function/${num}?vmask=${MAIN.vmask}`,
@@ -339,7 +356,6 @@ function enable_function() {
 	var e = document.getElementById("view-button");
 	e.disabled = false;
 	e.children[0].style.opacity = 1.;		
-	console.log('stack length =' + MAIN.stack.length);
 	e = document.getElementById("back-button");
 	if(MAIN.stack.length == 0) {
 		e.disabled = true;
@@ -437,4 +453,5 @@ function return_function() {
 /***** Initialization ******/
 MAIN.vmask = VIEW_MASK;
 MAIN.ovmask = VIEW_MASK;
+MAIN.code = document.getElementById("code");
 disable_function();

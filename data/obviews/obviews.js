@@ -98,9 +98,11 @@ function cfg_onmousedown(e) {
 		elt = document.elementFromPoint(e.clientX, e.clientY)
 		if(elt.localName == "text")
 			return;
+		//MAIN.code.style.user_select = "none";
 		CFG.panning = true;
 		CFG.prev.x = e.x;
 		CFG.prev.y = e.y;
+		return false;
 	}
 }
 
@@ -121,6 +123,7 @@ function cfg_onmouseup(e) {
 	if(e.button == 0) {
 		//console.log("up: : " + e.x + ", " + e.y + ", " + e.button);
 		CFG.panning = false;
+		//MAIN.code.style.user_select = "text";
 	}
 }
 

@@ -90,6 +90,9 @@ function cfg_transform() {
 
 function cfg_onmousedown(e) {
 	if(e.button == 0) {
+		elt = document.elementFromPoint(e.clientX, e.clientY)
+		if(elt.localName == "text")
+			return;
 		CFG.panning = true;
 		CFG.prev.x = e.x;
 		CFG.prev.y = e.y;

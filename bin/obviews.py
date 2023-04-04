@@ -39,7 +39,6 @@ import tempfile
 import time
 import urllib.parse
 import webbrowser
-import xml.etree.ElementTree as ET
 
 from http import server
 from http.server import BaseHTTPRequestHandler, HTTPServer
@@ -794,6 +793,7 @@ class CFG:
 		"""Generate the DOT code for the CFG with the given decorator."""
 		dec.start_cfg(self)
 		out.write("digraph %s {\n" % self.id)
+		out.write('node [ fontname = "Helvetica" ]\n')
 		for b in self.verts:
 			out.write("\t%s [" % b.id)
 			b.gen(dec, out)

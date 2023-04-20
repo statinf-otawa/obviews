@@ -1080,10 +1080,15 @@ def get_functions():
 	"""Generate HTML to access functions."""
 	out = StringBuffer()
 	n = 0
+	fns = []
 	for f in TASK.cfgs:
+		fns.append((f.label, n))
+		n = n + 1
+	fns.sort()
+	for (l, n) in fns:
 		out.write(
 			'<div><a href="javascript:open_function(%s, \'%s\');">%s</a></div>' \
-			% (n, f.label, f.label)
+			% (n, l, l)
 		)
 		n = n + 1
 	return out.to_str()

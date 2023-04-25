@@ -1485,7 +1485,7 @@ def main():
 		stat.ensure_load()
 
 	# start browser and server
-	with HTTPServer(("localhost", PORT), Handler) as server:
+	with HTTPServer(("0.0.0.0", PORT), Handler) as server:
 		port = server.server_address[1]
 		if DEBUG or serve:
 			print("INFO: listening to http://localhost:%d" % port)

@@ -96,8 +96,12 @@ function cfg_transform() {
 function cfg_onmousedown(e) {
 	if(e.button == 0) {
 		elt = document.elementFromPoint(e.clientX, e.clientY)
-		if(elt.localName == "text")
-			return;
+
+		if(elt.localName == "text") {
+			// Uncomment this if to be able to copy/paste code
+			// 	return;
+		}
+
 		//MAIN.code.style.user_select = "none";
 		CFG.panning = true;
 		CFG.prev.x = e.x;

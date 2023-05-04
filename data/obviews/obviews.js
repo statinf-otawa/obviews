@@ -142,6 +142,26 @@ function cfg_unzoom() {
 	cfg_transform();
 }
 
+function cfg_reset() {
+	// gotta get the proper crect/srect and the easiest dirtiest fix is to do it twice 
+	for (var i = 0; i < 2; i++) {
+		// setup elements
+		var code = document.getElementById("code");
+		var crect = code.getBoundingClientRect();
+		var srect = code.children[0].getBoundingClientRect();
+
+		CFG.scale = 1.;
+		if(crect.width < srect.width) {
+			CFG.scale = crect.width / srect.width;
+			CFG.pos.x = -(srect.width - crect.width) / 2;
+			CFG.pos.y = -(srect.height - srect.height * CFG.scale) / 2
+		}
+		else
+			CFG.pos.x = -(srect.width - crect.width) / 2 / CFG.scale;
+		cfg_transform();
+	}
+}
+
 function cfg_onwheel(e) {
 	//console.log("wheel: " + e.timeStemp + ", " + e. deltaMode + ", " + e.wheelDelta);
 	if(e.wheelDelta > 0)
@@ -377,7 +397,10 @@ function enable_function() {
 	e.children[0].style.opacity = 1.;		
 	e = document.getElementById("unzoom-button");
 	e.disabled = false;
-	e.children[0].style.opacity = 1.;		
+	e.children[0].style.opacity = 1.;
+	e = document.getElementById("reset-button");
+	e.disabled = false;
+	e.children[0].style.opacity = 1.;
 }
 
 function disable_function() {
@@ -391,6 +414,9 @@ function disable_function() {
 	e.disabled = true;
 	e.children[0].style.opacity = .25;
 	e = document.getElementById("unzoom-button");
+	e.disabled = true;
+	e.children[0].style.opacity = .25;
+	e = document.getElementById("reset-button");
 	e.disabled = true;
 	e.children[0].style.opacity = .25;
 }

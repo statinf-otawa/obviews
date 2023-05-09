@@ -131,14 +131,53 @@ function cfg_onmouseup(e) {
 	}
 }
 
-function cfg_zoom() {
+function cfg_zoom(e) {
 	CFG.scale = CFG.scale + CFG.step;
+
+	// https://stackoverflow.com/a/30410948/3660320
+	var scaleChange = +CFG.step;
+	var zoomPointX;
+	var zoomPointY;
+	if(e === undefined) {
+		zoomPointX = CFG.pos.x;
+		zoomPointY = CFG.pos.y;
+	}
+	else {
+		zoomPointX = e.clientX;
+		zoomPointY = e.clientY;
+	}
+	var offsetX = -(zoomPointX * scaleChange);
+	var offsetY = -(zoomPointY * scaleChange);
+	CFG.pos.x += offsetX;
+	CFG.pos.y += offsetY;
+
 	cfg_transform();
 }
 
-function cfg_unzoom() {
-	if(CFG.scale > CFG.step)
-		CFG.scale = CFG.scale - CFG.step;	
+// zoom out: pos needs to be reduced
+function cfg_unzoom(e) {
+	if(CFG.scale > CFG.step) {
+		CFG.scale = CFG.scale - CFG.step;
+
+		// https://stackoverflow.com/a/30410948/3660320
+		var scaleChange = -CFG.step;
+		var zoomPointX;
+		var zoomPointY;
+		if(e === undefined) {
+			zoomPointX = CFG.pos.x;
+			zoomPointY = CFG.pos.y;
+		}
+		else {
+			zoomPointX = e.clientX;
+			zoomPointY = e.clientY;
+		}
+		var offsetX = -(zoomPointX * scaleChange);
+		var offsetY = -(zoomPointY * scaleChange);
+		CFG.pos.x += offsetX;
+		CFG.pos.y += offsetY;
+		console.log("offset: " + offsetX + ", " + offsetY);
+		// console.log("CFG: " + CFG);
+	}
 	cfg_transform();
 }
 
@@ -165,9 +204,9 @@ function cfg_reset() {
 function cfg_onwheel(e) {
 	//console.log("wheel: " + e.timeStemp + ", " + e. deltaMode + ", " + e.wheelDelta);
 	if(e.wheelDelta > 0)
-		cfg_unzoom();
+		cfg_unzoom(e);
 	else
-		cfg_zoom();
+		cfg_zoom(e);
 }
 
 function display_in_code(msg) {

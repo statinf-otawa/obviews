@@ -66,7 +66,7 @@ function clear_display(id){
 function make_CFG(cont) {
 	return {
 		scale: 		1.,
-		step: 		.1,
+		step: 		.15,
 		panning: 	false,
 		pos:		{ x: 0, y: 0 },
 		prev:		{ x: 0, y: 0 },
@@ -132,13 +132,13 @@ function cfg_onmouseup(e) {
 }
 
 function cfg_zoom() {
-	CFG.scale = CFG.scale + CFG.step;
+	CFG.scale = CFG.scale * (1 + CFG.step);
 	cfg_transform();
 }
 
 function cfg_unzoom() {
 	if(CFG.scale > CFG.step)
-		CFG.scale = CFG.scale - CFG.step;	
+		CFG.scale = CFG.scale / (1 + CFG.step);	
 	cfg_transform();
 }
 

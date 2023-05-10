@@ -46,16 +46,18 @@
 				</select>
 			</div>
 
-			<button onclick="javascript: cfg_reset();" id="reset-button">
+			<button onclick="javascript: cfg_reset_pos();" id="reset-pos-button" title="Reset viewport position">
+				<img src="map-outline.svg" style="width: 1em;"/>
+			<button onclick="javascript: cfg_reset();" id="reset-button" title = "reset viewport zoom">
 				<img src="reset.png" style="width: 1em;"/>
 			</button>
-			<button onclick="javascript: cfg_unzoom();" id="zoom-button">
+			<button onclick="javascript: cfg_unzoom();" id="zoom-button" title="Zoom in">
 				<img src="zoom.png" style="width: 1em;"/>
 			</button>
-			<button onclick="javascript: cfg_zoom();" id="unzoom-button">
+			<button onclick="javascript: cfg_zoom();" id="unzoom-button" title="Zoom out">
 				<img src="unzoom.png" style="width: 1em;"/>
 			</button>
-			<button onclick="javascript: return_function();" id="back-button">
+			<button onclick="javascript: return_function();" id="back-button" title="Go back">
 				<img src="goback.png" style="width: 1em;"/>
 			</button>
 		</div>

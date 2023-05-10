@@ -66,6 +66,7 @@ function clear_display(id){
 function make_CFG(cont) {
 	return {
 		scale: 		1.,
+		default_scale: 1.,
 		step: 		.15,
 		panning: 	false,
 		pos:		{ x: 0, y: 0 },
@@ -91,7 +92,6 @@ function cfg_transform() {
 		`translate(${CFG.pos.x}px, ${CFG.pos.y}px) scale(${CFG.scale}, ${CFG.scale})`;
 	CFG.cont.style.transform = t;
 }
-
 
 function cfg_onmousedown(e) {
 	if(e.button == 0) {
@@ -142,24 +142,32 @@ function cfg_unzoom() {
 	cfg_transform();
 }
 
+// resets zoom
 function cfg_reset() {
-	// gotta get the proper crect/srect and the easiest dirtiest fix is to do it twice 
-	for (var i = 0; i < 2; i++) {
-		// setup elements
-		var code = document.getElementById("code");
-		var crect = code.getBoundingClientRect();
-		var srect = code.children[0].getBoundingClientRect();
+	CFG.scale = CFG.default_scale;
+	cfg_transform();
 
-		CFG.scale = 1.;
+}
+
+// resets zoom and position
+function cfg_reset_pos() { 
+
+	CFG.cont.style.transform = `initial`;
+	CFG.pos.x = 0;
+	CFG.pos.y = 0;
+	CFG.prev.x = 0;
+	CFG.prev.y = 0;
+	CFG.scale = CFG.default_scale;
+	var crect = code.getBoundingClientRect();
+	var srect = code.children[0].getBoundingClientRect();
 		if(crect.width < srect.width) {
-			CFG.scale = crect.width / srect.width;
 			CFG.pos.x = -(srect.width - crect.width) / 2;
 			CFG.pos.y = -(srect.height - srect.height * CFG.scale) / 2
 		}
 		else
 			CFG.pos.x = -(srect.width - crect.width) / 2 / CFG.scale;
-		cfg_transform();
-	}
+	cfg_transform();
+
 }
 
 function cfg_onwheel(e) {
@@ -311,6 +319,7 @@ function display_function(answer) {
 		CFG_MAP.set(MAIN.id, CFG);
 		if(crect.width < srect.width) {
 			CFG.scale = crect.width / srect.width;
+			CFG.default_scale = CFG.scale;
 			CFG.pos.x = -(srect.width - crect.width) / 2;
 			CFG.pos.y = -(srect.height - srect.height * CFG.scale) / 2
 		}
@@ -392,6 +401,9 @@ function enable_function() {
 		e.disabled = false;
 		e.children[0].style.opacity = 1.;		
 	}
+	e = document.getElementById("reset-pos-button");
+	e.disabled = false;
+	e.children[0].style.opacity = 1.;
 	e = document.getElementById("zoom-button");
 	e.disabled = false;
 	e.children[0].style.opacity = 1.;		
@@ -404,6 +416,9 @@ function enable_function() {
 }
 
 function disable_function() {
+	e = document.getElementById("reset-pos-button");
+	e.disabled = true;
+	e.children[0].style.opacity = .25;
 	var e = document.getElementById("view-button");
 	e.disabled = true;
 	e.children[0].style.opacity = .25;		

@@ -69,6 +69,7 @@ function make_CFG(cont) {
 		default_scale: 1.,
 		step: 		.15,
 		panning: 	false,
+		default_size: {width: 0, height: 0}, 
 		pos:		{ x: 0, y: 0 },
 		prev:		{ x: 0, y: 0 },
 		cont:		cont
@@ -117,8 +118,8 @@ function cfg_onmousemove(e) {
 		var dy = e.y - CFG.prev.y;
 		CFG.prev.x = e.x;
 		CFG.prev.y = e.y;
-		CFG.pos.x = CFG.pos.x + dx / CFG.scale;
-		CFG.pos.y = CFG.pos.y + dy / CFG.scale;
+		CFG.pos.x = CFG.pos.x + dx;
+		CFG.pos.y = CFG.pos.y + dy;
 		cfg_transform();
 	}
 }
@@ -131,27 +132,101 @@ function cfg_onmouseup(e) {
 	}
 }
 
+
+// CFG.pos refers to the position of the top left corner of the graph BEFORE any scaling takes place
+// and changing the transform origin would mean we lose track of these values, 
+// which are necessary for other functions. 
 function cfg_zoom() {
-	CFG.scale = CFG.scale * (1 + CFG.step);
+	var zoom = 1 + CFG.step;
+	var srect = code.children[0].getBoundingClientRect();
+	var viewport = document.getElementById("viewport").getBoundingClientRect();
+
+	var viewportcenter = { // viewport centerpoint coordinates
+		x: viewport.width/2, 
+		y: viewport.height/2
+	}; 
+	var graphcenter = { // graph centerpoint coordinates
+		x: CFG.pos.x + (CFG.default_size.width /2), 
+		y: CFG.pos.y + (CFG.default_size.height /2)
+	}; 
+
+	var centerdist = { // vector of viewport center -> graph center
+		x: graphcenter.x - viewportcenter.x, 
+		y: graphcenter.y - viewportcenter.y
+	};
+
+	var newdist = { // distance from viewport to graph center after scaling
+		x: centerdist.x * zoom,
+		y: centerdist.y * zoom
+	};
+
+	var newgraphcenter = { //new graph centerpoint after scaling
+		x: viewportcenter.x + newdist.x, 
+		y: viewportcenter.y + newdist.y
+	};
+
+	var newpos = { // new position of the top left corner of the graph
+		x: newgraphcenter.x - (CFG.default_size.width / 2),
+		y: newgraphcenter.y - (CFG.default_size.height / 2)
+	};
+
+
+	CFG.scale = CFG.scale * zoom;
+	CFG.pos.x = newpos.x;
+	CFG.pos.y = newpos.y;
+	CFG.prev.x = CFG.pos.x;
+	CFG.prev.y = CFG.pos.y;
 	cfg_transform();
 }
 
 function cfg_unzoom() {
-	if(CFG.scale > CFG.step)
-		CFG.scale = CFG.scale / (1 + CFG.step);	
-	cfg_transform();
-}
+	if(CFG.scale > CFG.step) {
+		var zoom = 1 - CFG.step;
+		var srect = code.children[0].getBoundingClientRect();
+		var viewport = document.getElementById("viewport").getBoundingClientRect();
 
-// resets zoom
-function cfg_reset() {
-	CFG.scale = CFG.default_scale;
-	cfg_transform();
+		var viewportcenter = { // viewport center coordinates
+			x: viewport.width/2, 
+			y: viewport.height/2
+		}; 
+		var graphcenter = { // graph centerpoint coordinates
+			x: CFG.pos.x + (CFG.default_size.width /2), 
+			y: CFG.pos.y + (CFG.default_size.height /2)
+		}; 
 
+		var centerdist = { // vector of viewport center -> graph center
+			x: graphcenter.x - viewportcenter.x, 
+			y: graphcenter.y - viewportcenter.y
+		};
+
+		var newdist = { // distance from viewport to graph center after scaling
+			x: centerdist.x * zoom,
+			y: centerdist.y * zoom
+		};
+
+		var newgraphcenter = { //new graph centerpoint after scaling
+			x: viewportcenter.x + newdist.x, 
+			y: viewportcenter.y + newdist.y
+		};
+
+		var newpos = { // new position of the top left corner of the graph
+			x: newgraphcenter.x - (CFG.default_size.width / 2),
+			y: newgraphcenter.y - (CFG.default_size.height / 2)
+			
+			// translate is done before scale
+		};
+
+		CFG.scale = CFG.scale * zoom;
+		CFG.pos.x = newpos.x;
+		CFG.pos.y = newpos.y;
+		CFG.prev.x = CFG.pos.x;
+		CFG.prev.y = CFG.pos.y;
+		cfg_transform();
+	}
 }
 
 // resets zoom and position
-function cfg_reset_pos() { 
-
+function cfg_reset() {
 	CFG.cont.style.transform = `initial`;
 	CFG.pos.x = 0;
 	CFG.pos.y = 0;
@@ -167,12 +242,11 @@ function cfg_reset_pos() {
 		else
 			CFG.pos.x = -(srect.width - crect.width) / 2 / CFG.scale;
 	cfg_transform();
-
 }
 
 function cfg_onwheel(e) {
 	//console.log("wheel: " + e.timeStemp + ", " + e. deltaMode + ", " + e.wheelDelta);
-	if(e.wheelDelta > 0)
+	if(e.wheelDelta < 0)
 		cfg_unzoom();
 	else
 		cfg_zoom();
@@ -317,6 +391,8 @@ function display_function(answer) {
 	else {
 		CFG = make_CFG(code.children[0]);
 		CFG_MAP.set(MAIN.id, CFG);
+		CFG.default_size.width = srect.width; 
+		CFG.default_size.height = srect.height; 
 		if(crect.width < srect.width) {
 			CFG.scale = crect.width / srect.width;
 			CFG.default_scale = CFG.scale;
@@ -401,9 +477,6 @@ function enable_function() {
 		e.disabled = false;
 		e.children[0].style.opacity = 1.;		
 	}
-	e = document.getElementById("reset-pos-button");
-	e.disabled = false;
-	e.children[0].style.opacity = 1.;
 	e = document.getElementById("zoom-button");
 	e.disabled = false;
 	e.children[0].style.opacity = 1.;		
@@ -416,8 +489,6 @@ function enable_function() {
 }
 
 function disable_function() {
-	e = document.getElementById("reset-pos-button");
-	e.disabled = true;
 	e.children[0].style.opacity = .25;
 	var e = document.getElementById("view-button");
 	e.disabled = true;

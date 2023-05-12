@@ -45,9 +45,6 @@
 					${stats}
 				</select>
 			</div>
-
-			<button onclick="javascript: cfg_reset_pos();" id="reset-pos-button" title="Reset viewport position">
-				<img src="map-outline.svg" style="width: 1em;"/>
 			<button onclick="javascript: cfg_reset();" id="reset-button" title = "reset viewport zoom">
 				<img src="reset.png" style="width: 1em;"/>
 			</button>
@@ -80,7 +77,7 @@
 			</div>
 		
 
-			<div class="main">
+			<div class="main" id="viewport">
 				<div id="code" class="code">
 					<div class="hint">
 						Nothing to display.

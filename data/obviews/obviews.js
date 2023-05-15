@@ -69,7 +69,6 @@ function make_CFG(cont) {
 		default_scale: 1.,
 		step: 		.15,
 		panning: 	false,
-		default_size: {width: 0, height: 0}, 
 		pos:		{ x: 0, y: 0 },
 		prev:		{ x: 0, y: 0 },
 		cont:		cont
@@ -78,15 +77,6 @@ function make_CFG(cont) {
 
 var CFG = null;
 var CFG_MAP = new Map();
-
-/*function cfg_reset(cont) {
-	CFG.scale = 1.;
-	CFG.panning = false;
-	CFG.pos.x = 0;
-	CFG.pos.y = 0;
-	CFG.prev.x = 0;
-	CFG.prev.y = 0;
-}*/
 
 function cfg_transform() {
 	var t =
@@ -126,9 +116,7 @@ function cfg_onmousemove(e) {
 
 function cfg_onmouseup(e) {
 	if(e.button == 0) {
-		//console.log("up: : " + e.x + ", " + e.y + ", " + e.button);
 		CFG.panning = false;
-		//MAIN.code.style.user_select = "text";
 	}
 }
 
@@ -136,7 +124,8 @@ function cfg_onmouseup(e) {
 // CFG.pos refers to the position of the top left corner of the graph BEFORE any scaling takes place
 // and changing the transform origin would mean we lose track of these values, 
 // which are necessary for other functions. 
-function cfg_zoom(isZoomingIn = true) {
+function cfg_zoom(isZoomingIn=true, mouseEvt) {
+
 	var zoom = (isZoomingIn) ? 1+CFG.step : 1-CFG.step;
 
 	if (
@@ -149,18 +138,28 @@ function cfg_zoom(isZoomingIn = true) {
 	var srect = code.children[0].getBoundingClientRect();
 	var viewport = document.getElementById("viewport").getBoundingClientRect();
 
-	var viewportcenter = { // viewport centerpoint coordinates
-		x: viewport.width/2, 
-		y: viewport.height/2
-	}; 
+	// set viewport centerpoint coordinates
+	if (typeof mouseEvt === "undefined") { //from zoom buttons
+		var scalecenter = { 
+			x: viewport.width/2, 
+			y: viewport.height/2
+		}
+	}
+	else { //from mousewheel
+		var scalecenter = { 
+			x: mouseEvt.pageX - viewport.x, 
+			y: mouseEvt.pageY - viewport.y
+		}; 
+	}
+
 	var graphcenter = { // graph centerpoint coordinates
-		x: CFG.pos.x + (CFG.default_size.width /2), 
-		y: CFG.pos.y + (CFG.default_size.height /2)
+		x: CFG.pos.x + (srect.width / CFG.scale / 2), 
+		y: CFG.pos.y + (srect.height / CFG.scale /2)
 	}; 
 
 	var centerdist = { // vector of viewport center -> graph center
-		x: graphcenter.x - viewportcenter.x, 
-		y: graphcenter.y - viewportcenter.y
+		x: graphcenter.x - scalecenter.x, 
+		y: graphcenter.y - scalecenter.y
 	};
 
 	var newdist = { // distance from viewport to graph center after scaling
@@ -169,13 +168,13 @@ function cfg_zoom(isZoomingIn = true) {
 	};
 
 	var newgraphcenter = { //new graph centerpoint after scaling
-		x: viewportcenter.x + newdist.x, 
-		y: viewportcenter.y + newdist.y
+		x: scalecenter.x + newdist.x, 
+		y: scalecenter.y + newdist.y
 	};
 
 	var newpos = { // new position of the top left corner of the graph
-		x: newgraphcenter.x - (CFG.default_size.width / 2),
-		y: newgraphcenter.y - (CFG.default_size.height / 2)
+		x: newgraphcenter.x - (srect.width / CFG.scale /2),
+		y: newgraphcenter.y - (srect.height / CFG.scale /2)
 	};
 
 
@@ -207,11 +206,10 @@ function cfg_reset() {
 }
 
 function cfg_onwheel(e) {
-	//console.log("wheel: " + e.timeStemp + ", " + e. deltaMode + ", " + e.wheelDelta);
 	if(e.wheelDelta < 0)
-		cfg_zoom(false);
+		cfg_zoom(false, e);
 	else
-		cfg_zoom(true);
+		cfg_zoom(true, e);
 }
 
 function display_in_code(msg) {
@@ -221,7 +219,6 @@ function display_in_code(msg) {
 }
 
 function fill_node(node, color) {
-	//console.log("fill_node " + node);
 	if(node.children[1].tagName == "g")
 		node = node.children[1].children[0].children[0];
 	else
@@ -245,7 +242,6 @@ function display_stat(answer) {
 	if(MAIN.mode == MODE_SOURCE) {
 		var t = document.getElementById("stats");
 		t = t.children[0]
-		//console.log(answer);
 		let a = answer.split(" ");
 		t.children[0].children[2].innerHTML = MAIN.stat_name;
 		let max = parseInt(a[1]);
@@ -353,8 +349,6 @@ function display_function(answer) {
 	else {
 		CFG = make_CFG(code.children[0]);
 		CFG_MAP.set(MAIN.id, CFG);
-		CFG.default_size.width = srect.width; 
-		CFG.default_size.height = srect.height; 
 		if(crect.width < srect.width) {
 			CFG.scale = crect.width / srect.width;
 			CFG.default_scale = CFG.scale;
@@ -451,7 +445,6 @@ function enable_function() {
 }
 
 function disable_function() {
-	e.children[0].style.opacity = .25;
 	var e = document.getElementById("view-button");
 	e.disabled = true;
 	e.children[0].style.opacity = .25;		

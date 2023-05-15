@@ -136,8 +136,16 @@ function cfg_onmouseup(e) {
 // CFG.pos refers to the position of the top left corner of the graph BEFORE any scaling takes place
 // and changing the transform origin would mean we lose track of these values, 
 // which are necessary for other functions. 
-function cfg_zoom() {
-	var zoom = 1 + CFG.step;
+function cfg_zoom(isZoomingIn = true) {
+	var zoom = (isZoomingIn) ? 1+CFG.step : 1-CFG.step;
+
+	if (
+		(isZoomingIn == true && CFG.scale >= 10) ||
+		(isZoomingIn == false && CFG.scale <= 0.1)
+	) { 
+		return; //don't scale if we're too far in or out
+	}
+
 	var srect = code.children[0].getBoundingClientRect();
 	var viewport = document.getElementById("viewport").getBoundingClientRect();
 
@@ -179,52 +187,6 @@ function cfg_zoom() {
 	cfg_transform();
 }
 
-function cfg_unzoom() {
-	if(CFG.scale > CFG.step) {
-		var zoom = 1 - CFG.step;
-		var srect = code.children[0].getBoundingClientRect();
-		var viewport = document.getElementById("viewport").getBoundingClientRect();
-
-		var viewportcenter = { // viewport center coordinates
-			x: viewport.width/2, 
-			y: viewport.height/2
-		}; 
-		var graphcenter = { // graph centerpoint coordinates
-			x: CFG.pos.x + (CFG.default_size.width /2), 
-			y: CFG.pos.y + (CFG.default_size.height /2)
-		}; 
-
-		var centerdist = { // vector of viewport center -> graph center
-			x: graphcenter.x - viewportcenter.x, 
-			y: graphcenter.y - viewportcenter.y
-		};
-
-		var newdist = { // distance from viewport to graph center after scaling
-			x: centerdist.x * zoom,
-			y: centerdist.y * zoom
-		};
-
-		var newgraphcenter = { //new graph centerpoint after scaling
-			x: viewportcenter.x + newdist.x, 
-			y: viewportcenter.y + newdist.y
-		};
-
-		var newpos = { // new position of the top left corner of the graph
-			x: newgraphcenter.x - (CFG.default_size.width / 2),
-			y: newgraphcenter.y - (CFG.default_size.height / 2)
-			
-			// translate is done before scale
-		};
-
-		CFG.scale = CFG.scale * zoom;
-		CFG.pos.x = newpos.x;
-		CFG.pos.y = newpos.y;
-		CFG.prev.x = CFG.pos.x;
-		CFG.prev.y = CFG.pos.y;
-		cfg_transform();
-	}
-}
-
 // resets zoom and position
 function cfg_reset() {
 	CFG.cont.style.transform = `initial`;
@@ -247,9 +209,9 @@ function cfg_reset() {
 function cfg_onwheel(e) {
 	//console.log("wheel: " + e.timeStemp + ", " + e. deltaMode + ", " + e.wheelDelta);
 	if(e.wheelDelta < 0)
-		cfg_unzoom();
+		cfg_zoom(false);
 	else
-		cfg_zoom();
+		cfg_zoom(true);
 }
 
 function display_in_code(msg) {
@@ -477,10 +439,10 @@ function enable_function() {
 		e.disabled = false;
 		e.children[0].style.opacity = 1.;		
 	}
-	e = document.getElementById("zoom-button");
+	e = document.getElementById("zoom-in-button");
 	e.disabled = false;
 	e.children[0].style.opacity = 1.;		
-	e = document.getElementById("unzoom-button");
+	e = document.getElementById("zoom-out-button");
 	e.disabled = false;
 	e.children[0].style.opacity = 1.;
 	e = document.getElementById("reset-button");
@@ -496,10 +458,10 @@ function disable_function() {
 	e = document.getElementById("back-button");
 	e.disabled = true;		
 	e.children[0].style.opacity = .25;
-	e = document.getElementById("zoom-button");
+	e = document.getElementById("zoom-in-button");
 	e.disabled = true;
 	e.children[0].style.opacity = .25;
-	e = document.getElementById("unzoom-button");
+	e = document.getElementById("zoom-out-button");
 	e.disabled = true;
 	e.children[0].style.opacity = .25;
 	e = document.getElementById("reset-button");

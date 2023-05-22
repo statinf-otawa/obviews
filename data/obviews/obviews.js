@@ -70,7 +70,6 @@ function make_CFG(cont) {
 		step: 		.15,
 		panning: 	false,
 		pos:		{ x: 0, y: 0 },
-		prev:		{ x: 0, y: 0 },
 		cont:		cont
 	};
 }
@@ -87,16 +86,10 @@ function cfg_transform() {
 function cfg_onmousedown(e) {
 	if(e.button == 0) {
 		elt = document.elementFromPoint(e.clientX, e.clientY)
-
 		if(elt.localName == "text") {
-			// Uncomment this if to be able to copy/paste code
-			// 	return;
+			return;
 		}
-
-		//MAIN.code.style.user_select = "none";
 		CFG.panning = true;
-		CFG.prev.x = e.x;
-		CFG.prev.y = e.y;
 		return false;
 	}
 }
@@ -104,12 +97,8 @@ function cfg_onmousedown(e) {
 
 function cfg_onmousemove(e) {
 	if(CFG.panning) {
-		var dx = e.x - CFG.prev.x;
-		var dy = e.y - CFG.prev.y;
-		CFG.prev.x = e.x;
-		CFG.prev.y = e.y;
-		CFG.pos.x = CFG.pos.x + dx;
-		CFG.pos.y = CFG.pos.y + dy;
+		CFG.pos.x = CFG.pos.x + e.movementX;
+		CFG.pos.y = CFG.pos.y + e.movementY;
 		cfg_transform();
 	}
 }
@@ -185,8 +174,6 @@ function cfg_zoom(isZoomingIn=true, mouseEvt) {
 	CFG.scale = CFG.scale * zoom;
 	CFG.pos.x = newpos.x;
 	CFG.pos.y = newpos.y;
-	CFG.prev.x = CFG.pos.x;
-	CFG.prev.y = CFG.pos.y;
 	cfg_transform();
 }
 
@@ -195,8 +182,6 @@ function cfg_reset() {
 	CFG.cont.style.transform = `initial`;
 	CFG.pos.x = 0;
 	CFG.pos.y = 0;
-	CFG.prev.x = 0;
-	CFG.prev.y = 0;
 	CFG.scale = CFG.default_scale;
 	var crect = code.getBoundingClientRect();
 	var srect = code.children[0].getBoundingClientRect();

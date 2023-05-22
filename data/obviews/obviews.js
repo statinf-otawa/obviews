@@ -120,6 +120,10 @@ function cfg_onmouseup(e) {
 	}
 }
 
+function cfg_onmouseleave(e) { 
+	CFG.panning = false;
+}
+
 
 // CFG.pos refers to the position of the top left corner of the graph BEFORE any scaling takes place
 // and changing the transform origin would mean we lose track of these values, 
@@ -364,6 +368,7 @@ function display_function(answer) {
 	code.onmousedown = cfg_onmousedown;
 	code.onmousemove = cfg_onmousemove;
 	code.onmouseup = cfg_onmouseup;
+	code.onmouseleave = cfg_onmouseleave;
 	code.addEventListener("wheel", cfg_onwheel);
 
 	// update context and stats

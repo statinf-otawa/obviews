@@ -1362,11 +1362,12 @@ class Handler(BaseHTTPRequestHandler):
 			code = response_code
 			message = None
 		self.send_response(code, message)
-		for key in headers:
-			self.send_header(key, headers[key])
-		self.send_header('Access-Control-Allow-Origin', '*')
-		self.end_headers()
-		self.wfile.write(data)
+		if headers is not None: 
+			for key in headers:
+				self.send_header(key, headers[key])
+				self.send_header('Access-Control-Allow-Origin', '*')
+				self.end_headers()
+				self.wfile.write(data)
 		if quit:
 			sys.exit(0)
 

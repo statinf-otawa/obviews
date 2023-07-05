@@ -1423,6 +1423,7 @@ def main():
 	global STATS
 	global TASK
 	global DEBUG
+	global PORT
 
 	# check for dot
 	DOT_PATH = shutil.which("dot")
@@ -1439,6 +1440,8 @@ def main():
 		help="Enable debugging mode.")
 	parser.add_argument("--serve", action="store_true",
 		help="Work as a server.")
+	parser.add_argument("--port", type=int, default='0',
+		help="Specify which port to use.")
 	args = parser.parse_args()
 	if args.debug:
 		DEBUG = True
@@ -1447,6 +1450,7 @@ def main():
 	if args.serve:
 		serve = True
 		print("INFO: server mode enabled.")
+	PORT = args.port
 
 	# find resources
 	otawa_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -1489,7 +1493,7 @@ def main():
 		stat.ensure_load()
 
 	# start browser and server
-	with HTTPServer(("localhost", 0), Handler) as server:
+	with HTTPServer(("localhost", PORT), Handler) as server:
 		port = server.server_address[1]
 		if DEBUG or serve:
 			print("INFO: listening to http://localhost:%d" % port)

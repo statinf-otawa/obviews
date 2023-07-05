@@ -634,6 +634,7 @@ BLOCK_EXIT = 1
 BLOCK_CODE = 2
 BLOCK_CALL = 3
 BLOCK_UNKNOWN = 4
+BLOCK_VIRTUAL = 5
 
 class Data:
 	
@@ -672,7 +673,8 @@ class Data:
 BLOCK_LABEL_MAP = {
 	BLOCK_ENTRY:	"entry",
 	BLOCK_EXIT:		"exit",
-	BLOCK_UNKNOWN:	"unknown"
+	BLOCK_UNKNOWN:	"unknown",
+	BLOCK_VIRTUAL:	"virtual"
 }
 
 class Block(Data):
@@ -890,6 +892,11 @@ class Task:
 		g.unknown = b
 		g.add(b)
 
+	def make_virtual(self, l):
+		g = self.cfgs[-1]
+		b = Block(BLOCK_VIRTUAL, len(g.verts))
+		g.add(b)		
+
 	def make_bb(self, l):
 		g = self.cfgs[-1]
 		b = BasicBlock(
@@ -923,7 +930,8 @@ class Task:
 			'B': self.make_bb,
 			'C': self.make_call,
 			'E': self.make_edge,
-			'U': self.make_unknown
+			'U': self.make_unknown,
+			'P': self.make_virtual
 		}
 		try:
 

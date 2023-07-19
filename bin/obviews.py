@@ -742,12 +742,22 @@ class CallBlock(Block):
 
 class Edge(Data):
 	
-	def __init__(self, src, snk):
+	def __init__(self, src, snk, type):
 		Data.__init__(self)
 		self.src = src
 		src.next.append(self)
 		self.snk = snk
 		snk.prev = self
+		self.type = type
+
+	def get_type_label(self):
+		"""Get label for the edge type. Return None for not-taken."""
+		if self.type == "T":
+			return "taken"
+		elif self.type == "N":
+			return None
+		else:
+			return self.type
 
 
 class CFG:
@@ -802,7 +812,11 @@ class CFG:
 			out.write("];\n")
 		for b in self.verts:
 			for e in b.next:
-				out.write("\t%s -> %s;\n" % (e.src.id, e.snk.id))
+				out.write("\t%s -> %s" % (e.src.id, e.snk.id))
+				l = e.get_type_label()
+				if l != None:
+					out.write(" [label=\"%s\"]" % l)
+				out.write(";\n");
 		dec.cfg_label(self, out)
 		out.write("\n}\n")
 		dec.end_cfg(self)
@@ -916,7 +930,7 @@ class Task:
 
 	def make_edge(self, l):
 		g = self.cfgs[-1]
-		Edge(g.verts[int(l[1])], g.verts[int(l[2])])
+		Edge(g.verts[int(l[1])], g.verts[int(l[2])], l[3])
 	
 	def read(self):
 		"""Read the task from the file."""

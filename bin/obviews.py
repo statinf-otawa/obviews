@@ -484,7 +484,7 @@ class View:
 	def gen(self, addr, code, out):
 		"""Output the code."""
 		if addr != None:
-			out.write("<font color=\"%s\" point-size=\"8\">&nbsp;&nbsp;%08x&nbsp;&gt;&nbsp;" % (self.color, addr))
+			out.write("<font color=\"%s\" point-size=\"8\">&nbsp;&nbsp;%08x&nbsp;" % (self.color, addr))
 		out.write(escape_html(code))
 		out.write("</font><br align='left'/>")
 

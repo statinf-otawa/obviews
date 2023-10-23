@@ -412,10 +412,24 @@ class SourceManager:
 
 ###### Views ######
 
+VIEW_COLORS = [
+	"red",
+	"grey",
+	"purple",
+	"green",
+	"blue",
+	"chocolate",
+	"coral",
+	"darkcyan",
+	"darkorange"
+]
+VIEW_COLOR = 0
+
 class View:
 	"""Represents view of the program."""
 
 	def __init__(self, path, task):
+		global VIEW_COLOR
 		self.path = path
 		self.task = task
 		self.name = os.path.basename(path)[:-9]
@@ -430,6 +444,11 @@ class View:
 		self.id = len(task.views)
 		self.level = self.id
 		task.views.append(self)
+		self.color = VIEW_COLORS[VIEW_COLOR]
+		VIEW_COLOR = (VIEW_COLOR + 1) % len(VIEW_COLORS)
+
+	def priority(self):
+		return 0
 
 	def load_line(self, l):
 		assert len(l) > 3
@@ -465,6 +484,22 @@ class View:
 	def gen(self, addr, code, out):
 		"""Output the code."""
 		if addr != None:
+			out.write("<font color=\"%s\" point-size=\"8\">&nbsp;&nbsp;%08x&nbsp;&gt;&nbsp;" % (self.color, addr))
+		out.write(escape_html(code))
+		out.write("</font><br align='left'/>")
+
+
+class DisassemblyView(View):
+	"""View for disassembly."""
+
+	def __init__(self, path, task):
+			View.__init__(self, path, task)
+
+	def priority(self):
+		return 1
+
+	def gen(self, addr, code, out):
+		if addr != None:
 			out.write("%08x&nbsp;" % addr)
 		out.write(escape_html(code))
 		out.write("<br align='left'/>")
@@ -477,6 +512,9 @@ class SourceView(View):
 		View.__init__(self, path, task)
 		task.sview = self
 		self.level = -1
+
+	def priority(self):
+		return 2
 
 	def load_line(self, l):
 		file, line = l[3].split(":")
@@ -506,7 +544,8 @@ class SourceView(View):
 
 
 SPECIAL_VIEWS = {
-	"source":	SourceView
+	"source":	SourceView,
+	"disassembly": DisassemblyView
 }
 
 
@@ -1508,6 +1547,9 @@ def main():
 		view = cls(s, TASK)
 	if TASK.sview != None:
 		TASK.sview.ensure_data()
+	TASK.views.sort(key = lambda v: v.priority(), reverse=True)
+	for i in range(0, len(TASK.views)):
+		TASK.views[i].level = i
 
 	# load statistics
 	for s in glob.glob(os.path.join(task_dir, "*-stat.csv")):

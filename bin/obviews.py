@@ -356,6 +356,8 @@ class SourceManager:
 		else:
 			for p in self.paths:
 				p = os.path.join(p, path)
+				if DEBUG:
+					print("Looking for sources, trying path '" + p + "'")
 				if os.path.isfile(p):
 					return p
 			return None
@@ -809,7 +811,7 @@ class CFG:
 class Task:
 	"""Represents a task of the application."""
 	
-	def __init__(self, exec, name, path):
+	def __init__(self, exec, name, path, source_path = None):
 		self.exec = exec
 		self.name = name
 		self.path = path
@@ -818,7 +820,7 @@ class Task:
 		self.max = Data()
 		self.sum = Data()
 		self.stats = []
-		self.sman = SourceManager([os.path.dirname(exec)])
+		self.sman = SourceManager([os.path.dirname(exec)], source_path.split(',') if source_path else None)
 		self.read()
 		self.defs = None
 		self.views = []
@@ -1427,9 +1429,11 @@ def main():
 	# parse arguments
 	parser = argparse.ArgumentParser(description = "WCET viewer for OTAWA")
 	parser.add_argument('executable', type=str,
-		help="Select the exacutable to get statistics from.")
-	parser.add_argument('task', nargs="?", type=str,
+		help="Select the executable to get statistics from.")
+	parser.add_argument('task', nargs="?", type=str, default="main",
 		help="Select which task to display (default main function).")
+	parser.add_argument('source', nargs="?", type=str,
+		help="Commat separated list of root source directories (optional)")
 	parser.add_argument("--debug", action="store_true",
 		help="Enable debugging mode.")
 	parser.add_argument("--serve", action="store_true",
@@ -1462,14 +1466,11 @@ def main():
 	# load task information
 	exe_dir = os.path.dirname(os.path.splitext(args.executable)[0])
 	exe_name = os.path.basename(os.path.splitext(args.executable)[0])
-	if not args.task:
-		task_name = "main"
-	else:
-		task_name = args.task
+	task_name = args.task
 	task_dir = os.path.join(exe_dir, exe_name + "-otawa", task_name )
 	if not os.path.exists(task_dir):
 		fatal("no statistics for %s task %s. Did you forget --stats option in owcet?" % (args.executable, task_name))
-	TASK = Task(args.executable, task_name, task_dir)
+	TASK = Task(args.executable, task_name, task_dir, args.source)
 
 	# load views
 	for s in glob.glob(os.path.join(task_dir, "*-view.csv")):

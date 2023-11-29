@@ -1374,8 +1374,7 @@ class Handler(BaseHTTPRequestHandler):
 	do_POST = do_GET
 
 	def log_error(self, fmt, *args):
-		pass
-		# http.server.BaseHTTPRequestHandler.log_message(self, fmt % args)
+		BaseHTTPRequestHandler.log_message(self, fmt % args)
 
 	def log_message(self, fmt, *args):
 		pass

@@ -1432,7 +1432,7 @@ def main():
 	parser.add_argument('task', nargs="?", type=str, default="main",
 		help="Select which task to display (default main function).")
 	parser.add_argument('source', nargs="?", type=str,
-		help="Commat separated list of root source directories (optional)")
+		help="Comma separated list of root source directories (optional)")
 	parser.add_argument("--debug", action="store_true",
 		help="Enable debugging mode.")
 	parser.add_argument("--serve", action="store_true",

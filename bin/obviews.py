@@ -1439,6 +1439,7 @@ def main():
 		help="Work as a server.")
 	parser.add_argument("--port", type=int, default='0',
 		help="Specify which port to use.")
+	parser.add_argument("--datadir", type=str, default=None)
 	args = parser.parse_args()
 	if args.debug:
 		DEBUG = True
@@ -1450,17 +1451,22 @@ def main():
 	PORT = args.port
 
 	# find resources
-	otawa_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-	DATA_DIR = None
-	for path in [
-		os.path.join(otawa_path, "data/obviews"),
-		os.path.join(otawa_path, "share/Otawa/obviews")
-	]:
-		if os.path.exists(path):
-			DATA_DIR = path
-			break
-	if DATA_DIR == None:
-		fatal("cannot find internal data!\n")
+	if args.datadir:
+		DATA_DIR = args.datadir
+		if not os.path.exists(DATA_DIR):
+			fatal("cannot find external data",DATA_DIR,"!\n")
+	else:
+		otawa_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+		DATA_DIR = None
+		for path in [
+			os.path.join(otawa_path, "data/obviews"),
+			os.path.join(otawa_path, "share/Otawa/obviews")
+		]:
+			if os.path.exists(path):
+				DATA_DIR = path
+				break
+		if DATA_DIR == None:
+			fatal("cannot find internal data!\n")
 
 	# load task information
 	exe_dir = os.path.dirname(os.path.splitext(args.executable)[0])

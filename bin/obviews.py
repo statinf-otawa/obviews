@@ -820,7 +820,7 @@ class Task:
 		self.max = Data()
 		self.sum = Data()
 		self.stats = []
-		self.sman = SourceManager([os.path.dirname(exec)], source_path.split(',') if source_path else None)
+		self.sman = SourceManager([os.path.dirname(exec)], source_path.split(',') if source_path else ['.'])
 		self.read()
 		self.defs = None
 		self.views = []

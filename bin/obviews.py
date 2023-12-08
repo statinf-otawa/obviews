@@ -1474,7 +1474,7 @@ def main():
 	task_name = args.task
 	task_dir = os.path.join(exe_dir, exe_name + "-otawa", task_name)
 	if not os.path.exists(task_dir):
-		fatal("No statistics for %s task %s. (%s)\nDid you forget --stats option in owcet?" % (args.executable, task_dir, task_name))
+		fatal("No statistics for %s task %s. (%s)\nDid you forget --stats option in owcet?" % (args.executable, task_name, task_dir))
 	TASK = Task(args.executable, task_name, task_dir, args.source)
 
 	# load views

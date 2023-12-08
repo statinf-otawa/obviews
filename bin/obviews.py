@@ -354,7 +354,7 @@ class SourceManager:
 		if os.path.isabs(path):
 			return os.path.isfile(path)
 		else:
-			for p in self.paths:
+			for p in self.paths+self.task: # Also look in the dirname of the exe
 				p = os.path.join(p, path)
 				if DEBUG:
 					print("Looking for sources, trying path '" + p + "'")

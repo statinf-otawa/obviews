@@ -5,3 +5,4 @@ cmake_install.cmake
 install_manifest.txt
 out.xml
 Makefile
+bin/__pycache__

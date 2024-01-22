@@ -508,6 +508,9 @@ class SourceView(View):
 SPECIAL_VIEWS = {
 	"source":	SourceView
 }
+BLACKLISTED_VIEWS = [
+	"register" # This is not interesting for production
+]
 
 
 ######## Lookup definitions #########
@@ -1479,11 +1482,13 @@ def main():
 
 	# load views
 	for s in glob.glob(os.path.join(task_dir, "*-view.csv")):
-		try:
-			cls = SPECIAL_VIEWS[os.path.basename(s)[:-9]]
-		except KeyError:
+		view_name = os.path.basename(s)[:-9]
+		if view_name in SPECIAL_VIEWS:
+			cls = SPECIAL_VIEWS[view_name]
+		else:
 			cls = View
-		view = cls(s, TASK)
+		if not view_name in BLACKLISTED_VIEWS:
+			view = cls(s, TASK)
 	if TASK.sview != None:
 		TASK.sview.ensure_data()
 

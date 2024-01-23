@@ -19,6 +19,12 @@
  *	Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+@font-face {
+    font-family: "Archivo";
+    src: url('Archivo-SemiBold.ttf') format('truetype'),
+         url('../../../../../.fonts/Archivo-SemiBold.ttf') format('truetype');
+}
+
 * {
   box-sizing: border-box;
 }
@@ -29,8 +35,8 @@ body {
     background-size: auto;
     background-repeat: repeat;
     background-attachment: fixed;
-    font-family: 'Trebuchet MS', Arial, sans-serif;
-    background: #EEEEEE;
+    font-family: 'Archivo';
+    background: #E3ECF5;
     /*background: pink;*/
 	height: 100vh;
 	padding: 0;
@@ -268,6 +274,19 @@ div.top div.menu {
 	float: right;
 }
 
+button, select {
+    font-family: "Archivo";
+    font-weight: 600;
+    color: #1C69B6;
+    text-align: center;
+    border: none;
+    border-radius: 8px;
+    margin: 4px 4px;
+    padding: 14px 26px;
+    background-color: #C2DFF9;
+    cursor: pointer;
+}
+
 /* left part */
 div.left {
 	flex: 1;
@@ -287,10 +306,15 @@ div.infos {
 div.list {
 	display: inline-block;
 	float: left;
-	overflow: scroll;
+    overflow: hidden;
 	flex: 4;
 	margin-right: 8px;
 }
+
+div.list:hover {
+    overflow: auto;
+}
+
 div.items {
 	padding-left: 8px;
 }
@@ -329,7 +353,7 @@ div.bottom {
 
 /* generic classes */
 .code {
-	background: white;
+	background: #C2DFF9;
 	border-style: inset;
 	border-width: 2px;
 	border-radius: 4px;
@@ -337,6 +361,14 @@ div.bottom {
 	padding: 4px;
 	flex: 1;
 	margin: 0;
+}
+
+g.node path {
+    transition: stroke-width 1s ease-out;
+}
+
+g.node path:hover {
+    stroke-width: 2.5;
 }
 
 .empty-code {
@@ -359,7 +391,7 @@ div.bottom {
 	overflow: auto;
 	box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
 	padding: 8px;
-	background-color: white;
+	background-color: #E3ECF5;
 	z-index: 1000;
 }
 
@@ -416,4 +448,28 @@ a:hover {
 }
 .doc ul, ol {
 	text-align: left;
+}
+
+/* scrollbar styles */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+    
+::-webkit-scrollbar-track {
+    background: none;
+    border-radius: 6px;
+}
+
+::-webkit-scrollbar-thumb {
+    border-radius: 6px;
+    background: #BABABA;  
+}
+
+::-webkit-scrollbar-corner{
+    background: #C2DFF9; 
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #A8A8A8;
 }

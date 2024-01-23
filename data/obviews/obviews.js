@@ -314,7 +314,7 @@ function clear_function_stat() {
 	var g = document.getElementById("graph0");
 	for(let c of g.getElementsByTagName("g"))
 		if(c.id.startsWith("node"))
-			fill_node(c, "none");
+			fill_node(c, "white");
 }
 
 function display_function(answer) {

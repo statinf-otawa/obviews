@@ -1300,8 +1300,14 @@ def do_function(comps, query):
 
 	# send the SVG
 	os.remove(path)
-	return 200, {}, r.stdout
+	http_response = postprocess_svg(r.stdout.decode()).encode()
+	return 200, {}, http_response
 
+def postprocess_svg(text):
+		# Insert javascript function call foreach node in the SVG
+		node_tag_regex = re.compile(r"(<g\s+id=(\"[^\"]*\"|'[^']*')\s+class\s*=(\"\s*node\s*\"|'\s*node\s*'))")
+		result = node_tag_regex.sub(r"\g<1> onclick='javascript:cfg_center_block_mouse_event(\g<2>)'",text)
+		return result
 
 def do_function_stat(comps, query):
 	stat = TASK.stats[int(query["stat"]) - 1]

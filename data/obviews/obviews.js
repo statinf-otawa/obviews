@@ -90,6 +90,7 @@ function cfg_onmousedown(e) {
 		// 	return;
 		// }
 		CFG.panning = true;
+		CFG.cont.style.transition = null
 		return false;
 	}
 }
@@ -118,7 +119,7 @@ function cfg_onmouseleave(e) {
 // and changing the transform origin would mean we lose track of these values, 
 // which are necessary for other functions. 
 function cfg_zoom(isZoomingIn=true, mouseEvt) {
-
+	CFG.cont.style.transition = `transform .5s`;
 	var zoom = (isZoomingIn) ? 1+CFG.step : 1-CFG.step;
 
 	if (
@@ -177,9 +178,63 @@ function cfg_zoom(isZoomingIn=true, mouseEvt) {
 	cfg_transform();
 }
 
+// center on a given block by its address
+function cfg_center_block_qt_event(block_addr) {
+	const addrRegex = new RegExp("(?<addr>[0-9a-fA-F]+)");
+	const addrTitleRegex = new RegExp("(?<addr>[0-9a-fA-F]+):");
+	var found = block_addr.match(addrRegex);
+	if (found !== null) {
+		var selectedAddr = found.groups["addr"];
+		allNode = document.getElementsByClassName("node");
+		for (let node of allNode) {
+			var nodeTitle = node.getElementsByTagName('text')[0].innerHTML;
+			var found = nodeTitle.match(addrTitleRegex);
+			if (found !== null) {
+				var nodeAddr = found.groups["addr"];
+				if (parseInt(selectedAddr, 16) == parseInt(nodeAddr, 16)) {
+					block = node;
+					break;
+				}
+			}
+		}
+		if (!Object.is(block, null)) {
+			cfg_center_block(block);
+		}
+		
+	}
+}
+
+// center on a given block by its ID
+function cfg_center_block_mouse_event(blockid) {
+	var block = document.getElementById(blockid);
+	cfg_center_block(block);
+}
+
+// center on a given block container
+function cfg_center_block(block_cont) {
+	CFG.cont.style.transform = `initial`;
+	CFG.cont.style.transition = `transform .5s`;
+	CFG.pos.x = 0;
+	CFG.pos.y = 0;
+	var old_scale = CFG.scale;
+	CFG.scale = CFG.default_scale;
+	var viewport_rect = document.getElementById("viewport").getBoundingClientRect();
+	var svg_rect = code.children[0].getBoundingClientRect();
+	var bb_rect = block_cont.getBoundingClientRect();
+	CFG.pos.x = (viewport_rect.width - bb_rect.width / old_scale) / 2 - (bb_rect.x - svg_rect.x) / old_scale;
+	if (bb_rect.height / old_scale > viewport_rect.height) {
+		CFG.pos.y = (viewport_rect.height - 50) / 2 - (bb_rect.y - svg_rect.y) / old_scale;	
+	}
+	else {
+		CFG.pos.y = (viewport_rect.height - bb_rect.height / old_scale) / 2 - (bb_rect.y - svg_rect.y) / old_scale;	
+	}
+	cfg_transform();
+}
+
 // resets zoom and position
 function cfg_reset() {
 	CFG.cont.style.transform = `initial`;
+	CFG.cont.style.transition = `transform .5s`;
 	CFG.pos.x = 0;
 	CFG.pos.y = 0;
 	CFG.scale = CFG.default_scale;

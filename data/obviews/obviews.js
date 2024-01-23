@@ -187,7 +187,7 @@ function cfg_reset() {
 	var srect = code.children[0].getBoundingClientRect();
 		if(crect.width < srect.width) {
 			CFG.pos.x = -(srect.width - crect.width) / 2;
-			CFG.pos.y = -(srect.height - srect.height * CFG.scale) / 2
+			CFG.pos.y = -(srect.height - srect.height * CFG.scale) / 2;
 		}
 		else
 			CFG.pos.x = -(srect.width - crect.width) / 2 / CFG.scale;
@@ -482,7 +482,7 @@ function view_change(e, n) {
 
 function view_switch() {
 	var menu = document.getElementById("view-menu");
-	if(menu.style.display == "none")
+	if((menu.style.display == "none") || (menu.style.display.length === 0))
 		menu.style.display = "block";
 	else {
 		menu.style.display = "none";

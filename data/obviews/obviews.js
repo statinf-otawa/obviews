@@ -113,9 +113,6 @@ function cfg_onmouseup(e) {
 	}
 }
 
-function cfg_onmouseleave(e) { 
-	CFG.panning = false;
-}
 
 
 // CFG.pos refers to the position of the top left corner of the graph BEFORE any scaling takes place
@@ -413,8 +410,7 @@ function display_function(answer) {
 	// update events
 	code.onmousedown = cfg_onmousedown;
 	code.onmousemove = cfg_onmousemove;
-	code.onmouseup = cfg_onmouseup;
-	code.onmouseleave = cfg_onmouseleave;
+	window.onmouseup = cfg_onmouseup;
 	code.addEventListener("wheel", cfg_onwheel);
 
 	// update context and stats

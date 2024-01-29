@@ -69,6 +69,7 @@ function make_CFG(cont) {
 		default_scale: 1.,
 		step: 		.15,
 		panning: 	false,
+		bb_focus: 	false,
 		pos:		{ x: 0, y: 0 },
 		cont:		cont
 	};
@@ -84,19 +85,21 @@ function cfg_transform() {
 }
 
 function cfg_onmousedown(e) {
+	CFG.bb_focus = true;
 	if(e.button == 0) {
 		elt = document.elementFromPoint(e.clientX, e.clientY)
 		// if(elt.localName == "text") {
 		// 	return;
 		// }
 		CFG.panning = true;
-		CFG.cont.style.transition = null
 		return false;
 	}
 }
 
 
 function cfg_onmousemove(e) {
+	CFG.bb_focus = false;
+	CFG.cont.style.transition = null
 	if(CFG.panning) {
 		CFG.pos.x = CFG.pos.x + e.movementX;
 		CFG.pos.y = CFG.pos.y + e.movementY;
@@ -212,23 +215,26 @@ function cfg_center_block_mouse_event(blockid) {
 
 // center on a given block container
 function cfg_center_block(block_cont) {
-	CFG.cont.style.transform = `initial`;
-	CFG.cont.style.transition = `transform .5s`;
-	CFG.pos.x = 0;
-	CFG.pos.y = 0;
-	var old_scale = CFG.scale;
-	CFG.scale = CFG.default_scale;
-	var viewport_rect = document.getElementById("viewport").getBoundingClientRect();
-	var svg_rect = code.children[0].getBoundingClientRect();
-	var bb_rect = block_cont.getBoundingClientRect();
-	CFG.pos.x = (viewport_rect.width - bb_rect.width / old_scale) / 2 - (bb_rect.x - svg_rect.x) / old_scale;
-	if (bb_rect.height / old_scale > viewport_rect.height) {
-		CFG.pos.y = (viewport_rect.height - 50) / 2 - (bb_rect.y - svg_rect.y) / old_scale;	
+	if (CFG.bb_focus) {
+		CFG.cont.style.transform = `initial`;
+		CFG.cont.style.transition = `transform .5s`;
+		CFG.pos.x = 0;
+		CFG.pos.y = 0;
+		var old_scale = CFG.scale;
+		CFG.scale = CFG.default_scale;
+		var viewport_rect = document.getElementById("viewport").getBoundingClientRect();
+		var svg_rect = code.children[0].getBoundingClientRect();
+		var bb_rect = block_cont.getBoundingClientRect();
+		CFG.pos.x = (viewport_rect.width - bb_rect.width / old_scale) / 2 - (bb_rect.x - svg_rect.x) / old_scale;
+		if (bb_rect.height / old_scale > viewport_rect.height) {
+			CFG.pos.y = (viewport_rect.height - 50) / 2 - (bb_rect.y - svg_rect.y) / old_scale;	
+		}
+		else {
+			CFG.pos.y = (viewport_rect.height - bb_rect.height / old_scale) / 2 - (bb_rect.y - svg_rect.y) / old_scale;	
+		}
+		cfg_transform();
 	}
-	else {
-		CFG.pos.y = (viewport_rect.height - bb_rect.height / old_scale) / 2 - (bb_rect.y - svg_rect.y) / old_scale;	
-	}
-	cfg_transform();
+	
 }
 
 // resets zoom and position

@@ -733,7 +733,7 @@ class Block(Data):
 
 	def gen(self, dec, out):
 		"""Called to generate DOT file."""
-		out.write("label=<<table border='0' cellpadding='8px'><tr><td align='center' balign='center'><b><font color='#1C69B6' point-size='16px'>%s</font></b></td></tr></table>>" % BLOCK_LABEL_MAP[self.type])
+		out.write("shape=\"ellipse\", label=<<table border='0' cellpadding='8px'><tr><td align='center' balign='center'><b><font color='#1C69B6' point-size='16px'>%s</font></b></td></tr></table>>" % BLOCK_LABEL_MAP[self.type])
 
 	def gen_sep(self, dec, out):
 		"""Called by the decorator to generate separator

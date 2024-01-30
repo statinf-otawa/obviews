@@ -1132,8 +1132,9 @@ def get_views():
 	out = StringBuffer()
 	for i in range(0, len(TASK.views)):
 		view = TASK.views[i]
-		out.write('<input name="view%d" %stype="checkbox" onchange="javascript:view_change(this, %d);"/><label for="view%d">%s</label><br/>\n'
+		out.write('<input id="view%d" name="view%d" %stype="checkbox" onchange="javascript:view_change(this, %d);"/><label for="view%d">%s</label><br/>\n'
 			% (
+				i,
 				i,
 				"checked " if view == TASK.sview else "",
 				i,

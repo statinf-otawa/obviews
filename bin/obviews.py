@@ -846,7 +846,7 @@ class CFG:
 		"""Generate the DOT code for the CFG with the given decorator."""
 		dec.start_cfg(self)
 		out.write("digraph %s {\n" % self.id)
-		out.write('node [ fontname = "Archivo" ,margin=0,shape="box",style="rounded, filled", penwidth="1" , color="#3B90F3" , fillcolor="#FFFFFF" ]\n')
+		out.write('node [ fontname = "Archivo" , margin="0.2,0.055", shape="box",style="rounded, filled", penwidth="1" , color="#3B90F3" , fillcolor="#FFFFFF" ]\n')
 		out.write('graph [bgcolor="#C2DFF9"]\n')
 		out.write('edge [ color="#3B90F3", style="solid", penwidth="1" , fontcolor="#1C69B6", fontname="Archivo"]\n')
 		for b in self.verts:

@@ -122,9 +122,9 @@ def escape_dot(s):
 def escape_html(s):
 	"""Escape a string to be compatible with HTML text."""
 	return s. \
+		replace("&", "&amp;"). \
 		replace("<", "&lt;"). \
 		replace(">", "&gt;"). \
-		replace("&", "&amp;"). \
 		replace(" ", "&nbsp;"). \
 		replace("\t", "&nbsp;&nbsp;&nbsp;&nbsp;")
 

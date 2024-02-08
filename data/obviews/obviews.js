@@ -66,6 +66,8 @@ function clear_display(id){
 function make_CFG(cont) {
 	return {
 		scale: 		1.,
+		default_x: 0.,
+		default_y: 0.,
 		default_scale: 1.,
 		step: 		.15,
 		panning: 	false,
@@ -215,20 +217,21 @@ function cfg_center_block(block_cont) {
 	if (CFG.bb_focus) {
 		CFG.cont.style.transform = `initial`;
 		CFG.cont.style.transition = `transform .5s`;
-		CFG.pos.x = 0;
-		CFG.pos.y = 0;
-		var old_scale = CFG.scale;
-		CFG.scale = CFG.default_scale;
+		CFG.pos.x = CFG.default_x;
+		CFG.pos.y = CFG.default_y;
 		var viewport_rect = document.getElementById("viewport").getBoundingClientRect();
 		var svg_rect = code.children[0].getBoundingClientRect();
 		var bb_rect = block_cont.getBoundingClientRect();
-		CFG.pos.x = (viewport_rect.width - bb_rect.width / old_scale) / 2 - (bb_rect.x - svg_rect.x) / old_scale;
-		if (bb_rect.height / old_scale > viewport_rect.height) {
-			CFG.pos.y = (viewport_rect.height - 50) / 2 - (bb_rect.y - svg_rect.y) / old_scale;	
+
+		CFG.pos.x += (svg_rect.width - bb_rect.width) / CFG.scale * CFG.default_scale / 2 - (bb_rect.x - svg_rect.x) / CFG.scale * CFG.default_scale;
+		
+		var height_to_center = bb_rect.height / CFG.scale;
+		// check if block height fit in the screen to center on the block or on the header
+		if (height_to_center > viewport_rect.height) {
+			height_to_center = 50; // height of a block header (BBx)
 		}
-		else {
-			CFG.pos.y = (viewport_rect.height - bb_rect.height / old_scale) / 2 - (bb_rect.y - svg_rect.y) / old_scale;	
-		}
+		CFG.pos.y += (viewport_rect.height - height_to_center * CFG.default_scale) / 2 - (bb_rect.y - svg_rect.y) / CFG.scale * CFG.default_scale;
+		CFG.scale = CFG.default_scale;
 		cfg_transform();
 	}
 	
@@ -238,17 +241,9 @@ function cfg_center_block(block_cont) {
 function cfg_reset() {
 	CFG.cont.style.transform = `initial`;
 	CFG.cont.style.transition = `transform .5s`;
-	CFG.pos.x = 0;
-	CFG.pos.y = 0;
+	CFG.pos.x = CFG.default_x;
+	CFG.pos.y = CFG.default_y;
 	CFG.scale = CFG.default_scale;
-	var crect = code.getBoundingClientRect();
-	var srect = code.children[0].getBoundingClientRect();
-		if(crect.width < srect.width) {
-			CFG.pos.x = -(srect.width - crect.width) / 2;
-			CFG.pos.y = -(srect.height - srect.height * CFG.scale) / 2;
-		}
-		else
-			CFG.pos.x = -(srect.width - crect.width) / 2 / CFG.scale;
 	cfg_transform();
 }
 
@@ -374,6 +369,24 @@ function clear_function_stat() {
 		if(c.id.startsWith("node"))
 			fill_node(c, "white");
 }
+// compute initial (default) position and scale of CFG
+function cfg_initial_position(code) {
+	var viewport_rect = document.getElementById("viewport").getBoundingClientRect();
+	var svg_rect = code.children[0].getBoundingClientRect();
+
+	if(viewport_rect.width < svg_rect.width) {
+		CFG.scale = viewport_rect.width / svg_rect.width;
+		CFG.default_scale = CFG.scale;
+		CFG.pos.x = -(svg_rect.width - viewport_rect.width) / 2;
+		CFG.pos.y = -(svg_rect.height - svg_rect.height * CFG.scale) / 2
+		CFG.default_y = CFG.pos.y;
+		
+	}
+	else {
+		CFG.pos.x = -(svg_rect.width - viewport_rect.width) / 2 / CFG.scale;
+	}
+	CFG.default_x = CFG.pos.x;
+}
 
 function display_function(answer) {
 	
@@ -381,8 +394,6 @@ function display_function(answer) {
 	var code = document.getElementById("code");
 	code.style.overflow = "clip";
 	code.innerHTML = answer;
-	var crect = code.getBoundingClientRect();
-	var srect = code.children[0].getBoundingClientRect();
 	var name = document.getElementById("main-name");
 	name.innerHTML = MAIN.name;
 	MAIN.mode = MODE_FUNCTION;
@@ -396,15 +407,8 @@ function display_function(answer) {
 	else {
 		CFG = make_CFG(code.children[0]);
 		CFG_MAP.set(MAIN.id, CFG);
-		if(crect.width < srect.width) {
-			CFG.scale = crect.width / srect.width;
-			CFG.default_scale = CFG.scale;
-			CFG.pos.x = -(srect.width - crect.width) / 2;
-			CFG.pos.y = -(srect.height - srect.height * CFG.scale) / 2
-		}
-		else
-			CFG.pos.x = -(srect.width - crect.width) / 2 / CFG.scale;
 	}
+	cfg_initial_position(code)
 	cfg_transform();
 
 	// update events

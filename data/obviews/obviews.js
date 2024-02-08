@@ -101,7 +101,7 @@ function cfg_onmousedown(e) {
 
 function cfg_onmousemove(e) {
 	CFG.bb_focus = false;
-	CFG.cont.style.transition = null
+	CFG.cont.style.transition = null;
 	if(CFG.panning) {
 		CFG.pos.x = CFG.pos.x + e.movementX;
 		CFG.pos.y = CFG.pos.y + e.movementY;
@@ -121,7 +121,7 @@ function cfg_onmouseup(e) {
 // and changing the transform origin would mean we lose track of these values, 
 // which are necessary for other functions. 
 function cfg_zoom(isZoomingIn=true, mouseEvt) {
-	CFG.cont.style.transition = `transform .5s`;
+	CFG.cont.style.transition = `null`;
 	var zoom = (isZoomingIn) ? 1+CFG.step : 1-CFG.step;
 
 	if (
@@ -178,32 +178,6 @@ function cfg_zoom(isZoomingIn=true, mouseEvt) {
 	CFG.pos.x = newpos.x;
 	CFG.pos.y = newpos.y;
 	cfg_transform();
-}
-
-// center on a given block by its address
-function cfg_center_block_qt_event(block_addr) {
-	const addrRegex = new RegExp("(?<addr>[0-9a-fA-F]+)");
-	const addrTitleRegex = new RegExp("(?<addr>[0-9a-fA-F]+):");
-	var found = block_addr.match(addrRegex);
-	if (found !== null) {
-		var selectedAddr = found.groups["addr"];
-		allNode = document.getElementsByClassName("node");
-		for (let node of allNode) {
-			var nodeTitle = node.getElementsByTagName('text')[0].innerHTML;
-			var found = nodeTitle.match(addrTitleRegex);
-			if (found !== null) {
-				var nodeAddr = found.groups["addr"];
-				if (parseInt(selectedAddr, 16) == parseInt(nodeAddr, 16)) {
-					block = node;
-					break;
-				}
-			}
-		}
-		if (!Object.is(block, null)) {
-			cfg_center_block(block);
-		}
-		
-	}
 }
 
 // center on a given block by its ID

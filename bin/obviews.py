@@ -979,7 +979,7 @@ class Task:
 		"""Read the task from the file."""
 		path = os.path.join(self.path, "cfg.csv")
 		if not os.path.exists(path):
-			fatal("no CFG file. Did you forget -W option in objdump/owcet?")
+			fatal("no CFG file found at '" + path + "'. Did you forget -W option in objdump/owcet?")
 		map = {
 			'G': self.make_cfg,
 			'N': self.make_entry,

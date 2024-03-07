@@ -352,7 +352,10 @@ class SourceManager:
 		"""Find the actual path to the given source.
 		Return None if it cannot be found."""
 		if os.path.isabs(path):
-			return os.path.isfile(path)
+			if os.path.isfile(path):
+				return path
+			else:
+				return None
 		else:
 			for p in self.paths+self.task: # Also look in the dirname of the exe
 				p = os.path.join(p, path)

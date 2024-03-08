@@ -39,6 +39,7 @@ import tempfile
 import time
 import urllib.parse
 import webbrowser
+import cxxfilt
 
 from http import server
 from http.server import BaseHTTPRequestHandler, HTTPServer
@@ -1154,9 +1155,10 @@ def get_functions():
 		n = n + 1
 	fns.sort()
 	for (l, n) in fns:
+		display_name = cxxfilt.demangle(l)
 		out.write(
 			'<div><a href="javascript:open_function(%s, \'%s\');">%s</a></div>' \
-			% (n, l, l)
+			% (n, l, display_name)
 		)
 		n = n + 1
 	return out.to_str()

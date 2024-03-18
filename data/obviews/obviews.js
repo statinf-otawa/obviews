@@ -204,6 +204,50 @@ function cfg_center_block_qt_event(block_addr) {
 	}
 }
 
+/**
+ * toggle color for visited/unvisited basic blocks (
+ * @param {list<int>} adr_list list of unvisited BBs.
+ * @param {boolean} toggle add/remove coloring.
+*/
+function color_unvisited_bb(adr_list, toggle) {
+	const addrTitleRegex = new RegExp("(?<addr>[0-9a-fA-F]+):");
+	allNode = document.getElementsByClassName("node");
+	// browse all node to add/remove coloring
+	if (toggle) {
+		for (let node of allNode) {
+			var nodeTitle = node.getElementsByTagName('text')[0].innerHTML;
+			// extract address from BB title
+			var found = nodeTitle.match(addrTitleRegex);
+			if (found !== null) {
+				var nodeAddr = found.groups["addr"];
+				// check if node is visited or not and add color
+				if (adr_list.includes(parseInt(nodeAddr, 16))) {
+					// fill_node(node, "#FF474C"); // unvisited node in red
+					node.children[1].setAttribute("stroke", "#FF474C");
+					node.children[1].setAttribute("stroke-width", 2);
+					node.children[2].setAttribute("fill", "#FF474C");
+				}
+				else {
+					// fill_node(node, "#0EC481"); // visited node in green
+					node.children[1].setAttribute("stroke", "#0EC481");
+					node.children[1].setAttribute("stroke-width", 2);
+					node.children[2].setAttribute("fill", "#0EC481");
+				}
+				// node.children[1].setAttribute("opacity", 0.5);
+			}
+		}
+	}
+	else {
+		// remove all nodes color
+		for (let node of allNode) {
+			// fill_node(node, "white");
+			node.children[1].setAttribute("stroke", "#3b90f3");
+			node.children[1].setAttribute("stroke-width", 1);
+			node.children[2].setAttribute("fill", "#1C69B6");
+		}
+	}
+}
+
 // center on a given block by its ID
 function cfg_center_block_mouse_event(blockid) {
 	var block = document.getElementById(blockid);

@@ -367,12 +367,13 @@ div.bottom {
 	margin: 0;
 }
 
-g.node path {
+/* g.node path {
     transition: stroke-width 1s ease-out;
-}
+} */
 
 g.node path:hover {
-    stroke-width: 2.5;
+    stroke-width: 3;
+    transition: stroke-width 1s ease-out;
 }
 
 .empty-code {

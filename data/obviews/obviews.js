@@ -180,6 +180,30 @@ function cfg_zoom(isZoomingIn=true, mouseEvt) {
 	cfg_transform();
 }
 
+// center on a given block by its address of type int (Hex)
+function cfg_center_block_qt_event(block_addr) {
+	const addrTitleRegex = new RegExp("(?<addr>[0-9a-fA-F]+):");
+	// browse all node to find the one with an address equal to the input
+	allNode = document.getElementsByClassName("node");
+	for (let node of allNode) {
+		// extract address from BB title
+		var nodeTitle = node.getElementsByTagName('text')[0].innerHTML;
+		var found = nodeTitle.match(addrTitleRegex);
+		if (found !== null) {
+			var nodeAddr = found.groups["addr"];
+			// check if node address equal to the input address
+			if (block_addr == parseInt(nodeAddr, 16)) {
+				block = node;
+				break;
+			}
+		}
+	}
+	if (!Object.is(block, null)) {
+		CFG.bb_focus = true;
+		cfg_center_block(block);
+	}
+}
+
 // center on a given block by its ID
 function cfg_center_block_mouse_event(blockid) {
 	var block = document.getElementById(blockid);

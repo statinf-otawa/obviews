@@ -431,6 +431,32 @@ function show_function(num, name) {
 	);
 }
 
+function find_option_index_by_text(selectId, text) {
+    var selectElement = document.getElementById(selectId);
+    for (var i = 0; i < selectElement.options.length; i++) {
+        if (selectElement.options[i].text.includes(text)) {
+            return i;
+        }
+    }
+    return -1; // No match is found
+}
+
+function show_execution_path(execution_id) {
+
+    console.log("JS: Select option containing", execution_id)
+    var optionIndex = find_option_index_by_text("stat", execution_id);
+
+    var selectElement = document.getElementById("stat");
+    selectElement.selectedIndex = optionIndex;
+
+
+    var event = new Event('change', {
+        'bubbles': true,
+        'cancelable': true
+    });
+    selectElement.dispatchEvent(event)
+
+}
 
 /****** Source display ******/
 

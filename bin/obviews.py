@@ -342,6 +342,7 @@ class SourceManager:
 		self.task = task
 		self.paths = paths
 		self.map = {}
+		self.corepath_map = {}
 		self.sources = []
 		self.max = Data()
 
@@ -364,10 +365,29 @@ class SourceManager:
 			if os.path.isfile(p):
 				return p
 		return None
+	
+	def find_actual_corepath(self, path):
+		"""
+		Returns:
+			- the core path
+			- the actual path, as a side effect
+		"""
+		path_prefix = path
+		corepath = None
+		while len(path_prefix) > 3: 
+			(path_prefix, suffix) = os.path.split(path_prefix)
+			corepath = os.path.join(suffix, corepath) if corepath else suffix
+			actual_path = self.identify_valid_path(corepath, self.paths)
+			if actual_path is not None:
+				if DEBUG:
+					print("DEBUG: Found sources for trimmed path '"+corepath+"'")
+				return corepath, actual_path
 
 	def find_actual_path(self, path):
 		"""Find the actual path to the given source.
-		Return None if it cannot be found."""
+		Returns:
+			- The actual path or None if it cannot be found.
+		Also updates self.corepath_map"""
 		if os.path.isabs(path):
 			if os.path.isfile(path):
 				return path
@@ -382,20 +402,24 @@ class SourceManager:
 				# 		- /rocqstat/sources/static/benchs/bench.c
 				# 		- /rocqstat/sources/rocqstat-ng/static/benchs/bench.c
 				# 		- ...
-				path_prefix = path
-				path_suffix = None
-				while len(path_prefix) > 3: 
-					(path_prefix, suffix) = os.path.split(path_prefix)
-					path_suffix = os.path.join(suffix, path_suffix) if path_suffix else suffix
-					actual_path = self.identify_valid_path(path_suffix, self.paths)
-					if actual_path is not None:
-						if DEBUG:
-							print("DEBUG: Found sources for trimmed path '"+path_suffix+"'")
-						return actual_path
-				return None
+				if path not in self.corepath_map:
+					corepath, actual_path = self.find_actual_corepath(path)
+					self.corepath_map[path] = corepath
+					return actual_path
+				else:
+					return self.identify_valid_path(self.corepath_map[path], self.paths)
 		else:
 			return self.identify_valid_path(path, self.paths+self.task)
 	
+	def find_corepath(self, name):
+		"""Look for a shorter path for the source file."""
+		if os.path.isabs(name):
+			if not name in self.corepath_map:
+				self.corepath_map[name], _ = self.find_actual_corepath(name) # Has side-effect on the self.corepath_map cache
+			return self.corepath_map[name]
+		else:
+			return name
+		
 	def find(self, name):
 		"""Look for a source file. If not already loaded, look
 		for the source using the lookup paths."""
@@ -403,7 +427,7 @@ class SourceManager:
 			return self.map[name]
 		except KeyError:
 			source = None
-			path = self.find_actual_path(name)
+			path, corepath = self.find_actual_path(name)
 			if path != None:
 				try:
 					source = Source(name, path)
@@ -566,9 +590,10 @@ class SourceView(View):
 	def gen(self, addr, code, out):
 		file, line = code
 		source = self.task.find_source(file)
+		corefile = self.task.find_corepath(file)
 		if source == None or self.file != file or self.line + 1 != line: 
 			out.write("<b><font color='#1c69b6'>%s:%d:</font></b><br align='left'/>" \
-				% (escape_html(file), line))
+				% (escape_html(corefile), line))
 		self.file = file
 		self.line = line
 		if source != None:
@@ -931,6 +956,9 @@ class Task:
 
 	def find_source(self, name):
 		return self.sman.find(name)
+	
+	def find_corepath(self, name):
+		return self.sman.find_corepath(name)
 
 	def find_cfg(self, addr):
 		"""Find a CFG by its address."""

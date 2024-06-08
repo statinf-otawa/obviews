@@ -348,6 +348,22 @@ class SourceManager:
 	def get_sources(self):
 		"""Get the sources composing the task."""
 		return self.sources
+	
+	def identify_valid_path(self, path, source_dirpaths):
+		"""
+		Identify a valid path to the file we are looking for
+		path: the relative path to the file
+		source_dirpaths: possible directories to look in (abs or relative paths) 
+		Returns the path if a valid path is found, or None
+		"""
+		for p in source_dirpaths:
+			p = os.path.join(p, path)
+			if DEBUG:
+				print("DEBUG: Looking for sources, trying path '" + p + "'... "\
+		  			+ ("OK" if os.path.isfile(p) else "KO"))
+			if os.path.isfile(p):
+				return p
+		return None
 
 	def find_actual_path(self, path):
 		"""Find the actual path to the given source.
@@ -356,18 +372,32 @@ class SourceManager:
 			if os.path.isfile(path):
 				return path
 			else:
+				# Attempt to break down the absolute path
+				# Example:
+				# 	path = /home/code/rocqstat-ng/static/benchs/bench.c
+				# 	self.paths = [/rocqstat/sources]
+				# 	Attempt:
+				# 		- /rocqstat/sources/bench.c
+				# 		- /rocqstat/sources/benchs/bench.c
+				# 		- /rocqstat/sources/static/benchs/bench.c
+				# 		- /rocqstat/sources/rocqstat-ng/static/benchs/bench.c
+				# 		- ...
+				path_prefix = path
+				path_suffix = None
+				while len(path_prefix) > 3: 
+					(path_prefix, suffix) = os.path.split(path_prefix)
+					path_suffix = os.path.join(suffix, path_suffix) if path_suffix else suffix
+					actual_path = self.identify_valid_path(path_suffix, self.paths)
+					if actual_path is not None:
+						if DEBUG:
+							print("DEBUG: Found sources for trimmed path '"+path_suffix+"'")
+						return actual_path
 				return None
 		else:
-			for p in self.paths+self.task: # Also look in the dirname of the exe
-				p = os.path.join(p, path)
-				if DEBUG:
-					print("Looking for sources, trying path '" + p + "'")
-				if os.path.isfile(p):
-					return p
-			return None
+			return self.identify_valid_path(path, self.paths+self.task)
 	
 	def find(self, name):
-		"""Lookup for a source file. If not already loaded, lookup
+		"""Look for a source file. If not already loaded, look
 		for the source using the lookup paths."""
 		try:
 			return self.map[name]
@@ -389,6 +419,7 @@ class SourceManager:
 			x = source.collect(num, stat, val)
 			self.max.max_val(stat, x)
 
+	# JRU: note this function is broken
 	def get_lines(self, path):
 		"""Get the lines for the given path. Return None if the path
 		cannot be found."""

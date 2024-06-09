@@ -357,13 +357,14 @@ class SourceManager:
 		source_dirpaths: possible directories to look in (abs or relative paths) 
 		Returns the path if a valid path is found, or None
 		"""
-		for p in source_dirpaths:
-			p = os.path.join(p, path)
-			if DEBUG:
-				print("DEBUG: Looking for sources, trying path '" + p + "'... "\
-		  			+ ("OK" if os.path.isfile(p) else "KO"))
-			if os.path.isfile(p):
-				return p
+		if path:
+			for p in source_dirpaths:
+				p = os.path.join(p, path)
+				if DEBUG:
+					print("DEBUG: Looking for sources, trying path '" + p + "'... "\
+			  			+ ("OK" if os.path.isfile(p) else "KO"))
+				if os.path.isfile(p):
+					return p
 		return None
 	
 	def find_actual_corepath(self, path):
@@ -382,6 +383,7 @@ class SourceManager:
 				if DEBUG:
 					print("DEBUG: Found sources for trimmed path '"+corepath+"'")
 				return corepath, actual_path
+		return None, None # No valid path found
 
 	def find_actual_path(self, path):
 		"""Find the actual path to the given source.
@@ -403,8 +405,7 @@ class SourceManager:
 				# 		- /rocqstat/sources/rocqstat-ng/static/benchs/bench.c
 				# 		- ...
 				if path not in self.corepath_map:
-					corepath, actual_path = self.find_actual_corepath(path)
-					self.corepath_map[path] = corepath
+					self.corepath_map[path], actual_path = self.find_actual_corepath(path)
 					return actual_path
 				else:
 					return self.identify_valid_path(self.corepath_map[path], self.paths)
@@ -415,7 +416,7 @@ class SourceManager:
 		"""Look for a shorter path for the source file."""
 		if os.path.isabs(name):
 			if not name in self.corepath_map:
-				self.corepath_map[name], _ = self.find_actual_corepath(name) # Has side-effect on the self.corepath_map cache
+				self.corepath_map[name], _ = self.find_actual_corepath(name)
 			return self.corepath_map[name]
 		else:
 			return name
@@ -427,7 +428,7 @@ class SourceManager:
 			return self.map[name]
 		except KeyError:
 			source = None
-			path, corepath = self.find_actual_path(name)
+			path = self.find_actual_path(name)
 			if path != None:
 				try:
 					source = Source(name, path)
@@ -591,6 +592,8 @@ class SourceView(View):
 		file, line = code
 		source = self.task.find_source(file)
 		corefile = self.task.find_corepath(file)
+		if corefile is None:
+			corefile = file
 		if source == None or self.file != file or self.line + 1 != line: 
 			out.write("<b><font color='#1c69b6'>%s:%d:</font></b><br align='left'/>" \
 				% (escape_html(corefile), line))

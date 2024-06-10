@@ -579,6 +579,9 @@ COLORS = [
 ]
 COLOR_TH = 4
 
+# A dict containing the address of all BB and the function (name, id) that contains them
+BB_DICT = {}  
+
 def background(ratio):
 	return COLORS[round(ratio * (len(COLORS) - 1))]
 
@@ -965,6 +968,7 @@ class Task:
 			int(l[1], 16),
 			int(l[2]))
 		g.add(b)
+		BB_DICT[int(l[1], 16)] = [g.label, g.id]
 
 	def make_call(self, l):
 		g = self.cfgs[-1]
@@ -1194,6 +1198,14 @@ def get_stat_colors():
 	out.write(");\n")
 	return out.to_str();
 
+def get_bb_map():
+	out = StringBuffer()
+	out.write("var BB_map = new Map([")
+	for k in BB_DICT.keys():
+		out.write(f'[{k}, ["{BB_DICT[k][0]}", "{BB_DICT[k][1]}"]],')
+	out.write("]);\n")
+	return out.to_str()
+
 def get_views():
 	out = StringBuffer()
 	for i in range(0, len(TASK.views)):
@@ -1223,6 +1235,7 @@ INDEX_MAP = {
 	"sources":		get_sources,
 	"stats":		get_stats,
 	"stat-colors":	get_stat_colors,
+	"get-bb-function-map":	    get_bb_map,
 	"application":	lambda: os.path.basename(os.path.splitext(TASK.exec)[0]),
 	"task":			lambda: TASK.name,
 	"views":		get_views,
@@ -1312,7 +1325,7 @@ def do_function(comps, query):
 def postprocess_svg(text):
 		# Insert javascript function call foreach node in the SVG
 		node_tag_regex = re.compile(r"(<g\s+id=(\"[^\"]*\"|'[^']*')\s+class\s*=(\"\s*node\s*\"|'\s*node\s*'))")
-		result = node_tag_regex.sub(r"\g<1> onclick='javascript:cfg_center_block_mouse_event(\g<2>)'",text)
+		result = node_tag_regex.sub(r"\g<1> onclick='javascript:cfg_center_block_by_id(\g<2>)'",text)
 		return result
 
 def do_function_stat(comps, query):

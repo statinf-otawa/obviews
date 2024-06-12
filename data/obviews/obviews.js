@@ -455,7 +455,18 @@ function show_execution_path(execution_id) {
         'cancelable': true
     });
     selectElement.dispatchEvent(event)
+}
 
+function select_function(function_name) {
+    var itemList = document.querySelector('#function-list');
+    var links = itemList.querySelectorAll('a');
+    for (var i = 0; i < links.length; i++) {
+        if (links[i].href.includes(function_name)) {
+	    
+            links[i].click();
+            break;
+        }
+    }
 }
 
 /****** Source display ******/

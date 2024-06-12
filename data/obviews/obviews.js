@@ -180,8 +180,39 @@ function cfg_zoom(isZoomingIn=true, mouseEvt) {
 	cfg_transform();
 }
 
-// center on a given block by its address of type int (Hex)
+// center on a given block from a qml call
 function cfg_center_block_qt_event(block_addr) {
+	var idx = BB_map.get(block_addr)[1];
+	var name = BB_map.get(block_addr)[0];
+	if (MAIN.id != idx) {
+		MAIN.stack = [];
+		MAIN.id = idx;
+		MAIN.name = name;
+		display_in_code(`Loading function ${name}`);
+		var url = `http://${HOST}/function/${idx}?vmask=${MAIN.vmask}`;
+		var req = new XMLHttpRequest();
+		req.open("GET", url);
+		req.addEventListener("load", function () {
+			if (req.status >= 200 && req.status < 400) {
+				display_function(req.responseText);
+				setTimeout(() => { cfg_center_block_by_address(block_addr) }, 100);
+			}
+			else {
+				console.error("req.status: " + req.status + " " + req.statusText + " " + url);
+			}
+		});
+		req.addEventListener("error", function () {
+			console.error("Error with URL " + url);
+		});
+		req.send(null);
+	}
+	else {
+		cfg_center_block_by_address(block_addr);
+	}
+}
+
+// center on a given block by its address of type int (Hex)
+function cfg_center_block_by_address(block_addr) {
 	const addrTitleRegex = new RegExp("(?<addr>[0-9a-fA-F]+):");
 	// browse all node to find the one with an address equal to the input
 	allNode = document.getElementsByClassName("node");
@@ -205,13 +236,15 @@ function cfg_center_block_qt_event(block_addr) {
 }
 
 // center on a given block by its ID
-function cfg_center_block_mouse_event(blockid) {
+function cfg_center_block_by_id(blockid) {
 	var block = document.getElementById(blockid);
 	cfg_center_block(block);
 }
 
 // center on a given block container
 function cfg_center_block(block_cont) {
+	block_cont.classList.add("animate");
+	setTimeout(() => { block_cont.classList.remove("animate") }, 1600);
 	if (CFG.bb_focus) {
 		CFG.cont.style.transform = `initial`;
 		CFG.cont.style.transition = `transform .5s`;

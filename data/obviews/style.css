@@ -375,6 +375,16 @@ g.node path:hover {
     stroke-width: 2.5;
 }
 
+.animate{
+    animation: fadeOutIn 0.8s 2;
+}
+
+@keyframes fadeOutIn {
+    0% { opacity: 1; }
+    50% { opacity: 0; }
+    100% { opacity: 1; }
+}
+
 .empty-code {
 	text-align: center;
 }

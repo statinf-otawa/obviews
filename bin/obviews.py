@@ -1621,7 +1621,7 @@ def main():
 		except KeyError:
 			cls = View
 		view = cls(s, TASK)
-	if TASK.sview != None:
+	if hasattr(TASK, 'sview') and TASK.sview != None:
 		TASK.sview.ensure_data()
 	TASK.views.sort(key = lambda v: v.priority(), reverse=True)
 	for i in range(0, len(TASK.views)):

@@ -215,7 +215,7 @@ function cfg_center_block_qt_event(block_addr) {
 function cfg_center_block_by_address(block_addr) {
 	const addrTitleRegex = new RegExp("(?<addr>[0-9a-fA-F]+):");
 	// browse all node to find the one with an address equal to the input
-	allNode = document.getElementsByClassName("node");
+	var allNode = document.getElementsByClassName("node");
 	for (let node of allNode) {
 		// extract address from BB title
 		var nodeTitle = node.getElementsByTagName('text')[0].innerHTML;
@@ -224,7 +224,7 @@ function cfg_center_block_by_address(block_addr) {
 			var nodeAddr = found.groups["addr"];
 			// check if node address equal to the input address
 			if (block_addr == parseInt(nodeAddr, 16)) {
-				block = node;
+				var block = node;
 				break;
 			}
 		}

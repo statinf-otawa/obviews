@@ -679,7 +679,7 @@ class StatDecorator(Decorator):
 		for stat in self.task.stats:
 			val = bb.get_val(stat)
 			percent = val * 100. / self.task.sum.get_val(stat)
-			out.write("%s=%d (%3.2f%%)<br align='left'/>" % (stat.label, val, percent))
+			out.write("%s=%d (%3.2f%%)<br align='left'/>" % (cxxfilt.demangle(stat.label), val, percent))
 
 
 class ViewDecorator(Decorator):
@@ -839,7 +839,7 @@ class CallBlock(Block):
 	def gen(self, dec, out):
 		if self.callee != None:
 			out.write("URL=\"javascript:call_function(%d, '%s')\",label=\"call %s\",shape=\"box\"" \
-				% (self.callee.id, self.callee.label, self.callee.label))
+				% (self.callee.id, self.callee.label, cxxfilt.demangle(self.callee.label)))
 		else:
 			out.write("label=\"call unknown\",shape=\"box\"")
 	

@@ -1243,7 +1243,7 @@ def get_stats():
 	out = StringBuffer()
 	out.write('<option selected>No stat.</option>')
 	for s in TASK.stats:
-		out.write("<option>%s</option>" % s.label)
+		out.write("<option>%s</option>" % cxxfilt.demangle(s.label))
 	return out.to_str()
 
 
@@ -1267,7 +1267,7 @@ def get_views():
 				"checked " if view == TASK.sview else "",
 				i,
 				i,
-				view.label
+				cxxfilt.demangle(view.label)
 			))
 	return out.to_str()
 
@@ -1416,7 +1416,7 @@ def do_context(comps, query):
 			cg = TASK.find_cfg(int(s[4:-1], 16))
 			if cg != None:
 				s = """<a href="javascript: open_function(%d, '%s');">%s</a>""" \
-					% (cg.id, cg.label, cg.label)
+					% (cg.id, cxxfilt.demangle(cg.label), cxxfilt.demangle(cg.label))
 		elif s.startswith("CALL("):
 			if cg != None:
 				bb = cg.find_bb(int(s[5:-1], 16))
@@ -1429,7 +1429,7 @@ def do_context(comps, query):
 							% (file, file, line)
 		out.write(s)
 		out.write('<img src="ctxsep.png" style="width: 1em;"/>')
-	out.write(g.label)			
+	out.write(cxxfilt.demangle(g.label))	
 	return 200, {"content-Type": "text/plain"}, out.to_utf8()
 	
 	

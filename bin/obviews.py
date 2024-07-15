@@ -681,7 +681,7 @@ class StatDecorator(Decorator):
 	def bb_body(self, bb, out):
 		for stat in self.task.stats:
 			val = bb.get_val(stat)
-			percent = val * 100. / self.task.sum.get_val(stat)
+			percent = (val * 100. / self.task.sum.get_val(stat)) if self.task.sum.get_val(stat) else 0
 			out.write("%s=%d (%3.2f%%)<br align='left'/>" % (cxxfilt.demangle(stat.label), val, percent))
 
 

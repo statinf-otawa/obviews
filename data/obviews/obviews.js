@@ -65,10 +65,10 @@ function clear_display(id){
 
 function make_CFG(cont) {
 	return {
-		scale: 		1.,
-		default_x: 0.,
-		default_y: 0.,
-		default_scale: 1.,
+		scale:		.7,
+		default_x:	0.,
+		default_y:	0.,
+		default_scale:	.7,
 		step: 		.15,
 		panning: 	false,
 		bb_focus: 	false,
@@ -409,14 +409,14 @@ function cfg_initial_position(code) {
 		CFG.scale = viewport_rect.width / svg_rect.width;
 		CFG.default_scale = CFG.scale;
 		CFG.pos.x = -(svg_rect.width - viewport_rect.width) / 2;
-		CFG.pos.y = -(svg_rect.height - svg_rect.height * CFG.scale) / 2
-		CFG.default_y = CFG.pos.y;
-		
 	}
+	
 	else {
-		CFG.pos.x = -(svg_rect.width - viewport_rect.width) / 2 / CFG.scale;
+		CFG.pos.x = (viewport_rect.width - svg_rect.width) / 2;
 	}
 	CFG.default_x = CFG.pos.x;
+	CFG.pos.y = -(svg_rect.height - svg_rect.height * CFG.scale) / 2;
+	CFG.default_y = CFG.pos.y;
 }
 
 function display_function(answer) {

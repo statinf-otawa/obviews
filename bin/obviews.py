@@ -947,6 +947,7 @@ class Task:
 		self.read()
 		self.defs = None
 		self.views = []
+		self.sview = None
 
 	def get_max(self, stat):
 		return self.max.get_val(stat)

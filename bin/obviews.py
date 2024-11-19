@@ -214,6 +214,7 @@ class CColorizer:
 			"([a-zA-Z_0-9]+)")
 
 	def colorize(self, line, out):
+		out.write("<font face='monospace'>")
 		while line:
 			m = self.re.search(line)
 			if not m:
@@ -231,6 +232,7 @@ class CColorizer:
 			else:
 				out.write(m.group())
 			line = line[m.end():]
+		out.write("</font>")
 		out.write("<br align='left'/>")
 
 SYNTAX_COLS = { ext: CColorizer \

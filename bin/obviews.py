@@ -579,7 +579,9 @@ class SourceView(View):
 		return 2
 
 	def load_line(self, l):
-		file, line = l[3].split(":")
+		tmp = l[3].split(":") #windows X:file:line
+		file = tmp[len(tmp)-2]
+		line = tmp[len(tmp)-1]
 		self.data[int(l[0])][int(l[1])].append((int(l[2], 16), (file, int(line))))
 		self.task.sman.find(file)
 
@@ -1407,7 +1409,7 @@ def do_function_stat(comps, query):
 	out = StringBuffer()
 	out.write(str(TASK.get_max(stat)))
 	for v in g.verts:
-		if v.type == BLOCK_CALL:
+		if v.type == BLOCK_CALL and v.callee:
 			x = v.callee.max.get_val(stat)
 		else:
 			x = v.get_val(stat)

@@ -292,10 +292,10 @@ function display_in_code(msg) {
 }
 
 function fill_node(node, color) {
-	if(node.children[1].tagName == "g")
-		node = node.children[1].children[0].children[0];
+	if(node.children[0].tagName == "g")
+		node = node.children[0].children[0].children[0];
 	else
-		node = node.children[1];
+		node = node.children[0];
 	node.setAttribute("fill", color);
 }
 
@@ -509,7 +509,7 @@ function clear_source_stat() {
 	t = t.children[0]
 	t.children[0].children[2].innerHTML = "";
 	for(let i = 0; i < t.childElementCount; i++) {
-		t.children[i].style.backgroundColor = "white";
+		t.children[i].style.backgroundColor = "";
 		t.children[i].children[2].innerHTML = "";
 	}
 }

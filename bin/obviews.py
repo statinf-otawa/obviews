@@ -1393,13 +1393,13 @@ def postprocess_svg(text):
 		# Insert javascript function call foreach node in the SVG
 		node_tag_regex = re.compile(r"(<g\s+id=(\"[^\"]*\"|'[^']*')\s+class\s*=(\"\s*node\s*\"|'\s*node\s*'))")
 		result = node_tag_regex.sub(r"\g<1> onclick='javascript:cfg_center_block_by_id(\g<2>)'",text)
-		
+
 		# Remove tooltip and title tags
 		title_tag_regex = re.compile(r"<title\b[^>]*>(.*?)</title>")
 		title_attribute_regex = re.compile(r"xlink:title=(\"[^\"]*\"|'[^']*')")
 		result = title_tag_regex.sub("",result)
 		result = title_attribute_regex.sub("",result)
-		
+
 		return result
 
 def do_function_stat(comps, query):

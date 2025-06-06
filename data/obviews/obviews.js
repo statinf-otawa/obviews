@@ -243,6 +243,7 @@ function cfg_center_block_by_id(blockid) {
 
 // center on a given block container
 function cfg_center_block(block_cont) {
+	if (block_cont.classList.contains("animate")) return;
 	block_cont.classList.add("animate");
 	setTimeout(() => { block_cont.classList.remove("animate") }, 1600);
 	if (CFG.bb_focus) {

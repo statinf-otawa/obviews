@@ -130,7 +130,7 @@ def escape_html(s):
 		replace("\t", "&nbsp;&nbsp;&nbsp;&nbsp;")
 
 
-DEF_RE = re.compile("#\s*(\S+):\s*(.*)")
+DEF_RE = re.compile(r"#\s*(\S+):\s*(.*)")
 class CSV:
 
 	def __init__(self, path):
@@ -205,13 +205,13 @@ NULL_COLORIZER = SyntaxColorizer()
 class CColorizer:
 	
 	def __init__(self):
-		self.re = re.compile("(^#[a-z]+)|" +
-			"(if|else|for|while|switch|case|break|continue|do|return)|" +
-			"(typedef|bool|int|char|float|double|short|long|signed|unsigned|struct|union|enum)|" +
-			"(//.*)|" +
-			"(/\*\*+/)|" + 
-			"(/\*(\*[^/]|[^\*])*\*/)|" +
-			"([a-zA-Z_0-9]+)")
+		self.re = re.compile(r"(^#[a-z]+)|" +
+			r"(if|else|for|while|switch|case|break|continue|do|return)|" +
+			r"(typedef|bool|int|char|float|double|short|long|signed|unsigned|struct|union|enum)|" +
+			r"(//.*)|" +
+			r"(/\*\*+/)|" + 
+			r"(/\*(\*[^/]|[^\*])*\*/)|" +
+			r"([a-zA-Z_0-9]+)")
 
 	def colorize(self, line, out):
 		out.write("<font face='monospace'>")
@@ -1194,7 +1194,7 @@ class Statistic:
 
 ######### Template preprocessing #########
 
-EXPAND_VAR = re.compile("([^\$]*)\$\{([^\}]*)\}(.*)")
+EXPAND_VAR = re.compile(r"([^\$]*)\$\{([^\}]*)\}(.*)")
 
 def preprocess(path, map):
 	"""Preprocess the given path containing string of the form ${ID}

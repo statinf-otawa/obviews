@@ -1410,7 +1410,9 @@ def do_function_stat(comps, query):
 	out.write(str(TASK.get_max(stat)))
 	for v in g.verts:
 		if v.type == BLOCK_CALL and v.callee:
-			x = v.callee.max.get_val(stat)
+			#if it's a call block, let's fetch the next block exec count (next[0] is an edge)
+			if len(v.next) and v.next[0].snk:
+				x = v.next[0].snk.get_val(stat)
 		else:
 			x = v.get_val(stat)
 		if x != 0:

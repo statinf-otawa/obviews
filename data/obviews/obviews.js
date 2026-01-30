@@ -543,7 +543,7 @@ function show_source(path) {
 function enable_function() {
 	var e = document.getElementById("view-button");
 	e.disabled = false;
-	e.style.color = "#1c69b6ff";
+	e.style.color = "#ca4468ff";
 	e.children[0].style.opacity = 1.;		
 	e = document.getElementById("back-button");
 	if(MAIN.stack.length == 0) {
@@ -568,7 +568,7 @@ function enable_function() {
 function disable_function() {
 	var e = document.getElementById("view-button");
 	e.disabled = true;
-	e.style.color = "#1c69b64f";
+	e.style.color = "#ca44684f";
 	e.children[0].style.opacity = .25;		
 	e = document.getElementById("back-button");
 	e.disabled = true;		

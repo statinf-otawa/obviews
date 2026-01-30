@@ -599,7 +599,7 @@ class SourceView(View):
 		if corefile is None:
 			corefile = file
 		if source == None or self.file != file or self.line + 1 != line: 
-			out.write("<b><font color='#1c69b6'>%s:%d:</font></b><br align='left'/>" \
+			out.write("<b><font color='#ca4468'>%s:%d:</font></b><br align='left'/>" \
 				% (escape_html(corefile), line))
 		self.file = file
 		self.line = line
@@ -803,7 +803,7 @@ class Block(Data):
 
 	def gen(self, dec, out):
 		"""Called to generate DOT file."""
-		out.write("shape=\"ellipse\", label=<<table border='0' cellpadding='8px'><tr><td align='center' balign='center'><b><font color='#1C69B6' point-size='16px'>%s</font></b></td></tr></table>>" % BLOCK_LABEL_MAP[self.type])
+		out.write("shape=\"ellipse\", label=<<table border='0' cellpadding='8px'><tr><td align='center' balign='center'><b><font color='#ca4468' point-size='16px'>%s</font></b></td></tr></table>>" % BLOCK_LABEL_MAP[self.type])
 
 	def gen_sep(self, dec, out):
 		"""Called by the decorator to generate separator
@@ -828,7 +828,7 @@ class BasicBlock(Block):
 	def gen(self, dec, out):
 		num = self.id
 		out.write(
-			"label=<<table border='0' cellpadding='8px'><tr><td><b><font color='#1C69B6' point-size='16px'>BB %s (%x:%s)</font></b></td></tr><hr/><tr><td align='left'>" \
+			"label=<<table border='0' cellpadding='8px'><tr><td><b><font color='#ca4468' point-size='16px'>BB %s (%x:%s)</font></b></td></tr><hr/><tr><td align='left'>" \
 			% (num, self.base, self.size))
 		dec.bb_body(self, out)
 		out.write("</td></tr></table>>")
@@ -916,9 +916,9 @@ class CFG:
 		"""Generate the DOT code for the CFG with the given decorator."""
 		dec.start_cfg(self)
 		out.write("digraph %s {\n" % self.id)
-		out.write('node [ fontname = "Archivo" , margin="0.2,0.055", shape="box",style="rounded, filled", penwidth="1" , color="#3B90F3" , fillcolor="#FFFFFF" ]\n')
-		out.write('graph [bgcolor="#C2DFF9"]\n')
-		out.write('edge [ color="#3B90F3", style="solid", penwidth="1" , fontcolor="#1C69B6", fontname="Archivo"]\n')
+		out.write('node [ fontname = "Archivo" , margin="0.2,0.055", shape="box",style="rounded, filled", penwidth="1" , color="#ca4468" , fillcolor="#FFFFFF" ]\n')
+		out.write('graph [bgcolor="#DADEE1"]\n')
+		out.write('edge [ color="#ca4468", style="solid", penwidth="1" , fontcolor="#ca4468", fontname="Archivo"]\n')
 		for b in self.verts:
 			out.write("\t%s [" % b.id)
 			b.gen(dec, out)
